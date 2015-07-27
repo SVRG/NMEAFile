@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1028</width>
+    <height>525</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>NMEA File Viewer</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <property name="minimumSize">
+    <size>
+     <width>0</width>
+     <height>469</height>
+    </size>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QCustomPlot" name="customPlot" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>200</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QTextBrowser" name="textBrowser">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>100</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>16777207</height>
+       </size>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1028</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuNMEA">
+    <property name="title">
+     <string>NMEA</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionOpen_File"/>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <addaction name="actionScale"/>
+    <addaction name="actionScale_Y"/>
+    <addaction name="actionY_Logarithmic"/>
+    <addaction name="separator"/>
+    <addaction name="actionGGA_Position"/>
+    <addaction name="actionNAV_Param"/>
+    <addaction name="actionErrors"/>
+    <addaction name="actionGGA_Diff_Age"/>
+    <addaction name="separator"/>
+    <addaction name="actionRMC"/>
+    <addaction name="actionBSS_Distance"/>
+    <addaction name="separator"/>
+    <addaction name="actionShow_Legend"/>
+   </widget>
+   <addaction name="menuNMEA"/>
+   <addaction name="menuFile"/>
+   <addaction name="menuView"/>
+  </widget>
+  <widget class="QToolBar" name="mainToolBar">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <action name="actionOpen_File">
+   <property name="text">
+    <string>Open File</string>
+   </property>
+  </action>
+  <action name="actionScale">
+   <property name="text">
+    <string>Scale X</string>
+   </property>
+  </action>
+  <action name="actionNAV_Param">
+   <property name="text">
+    <string>GGA Sattelites in use</string>
+   </property>
+  </action>
+  <action name="actionShow_Legend">
+   <property name="text">
+    <string>Show Legend</string>
+   </property>
+  </action>
+  <action name="actionErrors">
+   <property name="text">
+    <string>GGA Position Difference</string>
+   </property>
+  </action>
+  <action name="actionRMC">
+   <property name="text">
+    <string>RMC Speed &amp; Course</string>
+   </property>
+  </action>
+  <action name="actionScale_Y">
+   <property name="text">
+    <string>Scale Y</string>
+   </property>
+  </action>
+  <action name="actionGGA_Position">
+   <property name="text">
+    <string>GGA Position</string>
+   </property>
+  </action>
+  <action name="actionBSS_Distance">
+   <property name="text">
+    <string>BSS Distance</string>
+   </property>
+  </action>
+  <action name="actionGGA_Diff_Age">
+   <property name="text">
+    <string>GGA Diff Age</string>
+   </property>
+  </action>
+  <action name="actionY_Logarithmic">
+   <property name="text">
+    <string>Y Logarithmic</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>QCustomPlot</class>
+   <extends>QWidget</extends>
+   <header>qcustomplot.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
