@@ -101,7 +101,8 @@ void MainWindow::on_actionNAV_Param_triggered()
           // Если строка содежит GGA
           // $GPGGA,113448.601,5452.3307572,N,08258.7870772,E,1,17,0.8,160.927,M,    ,M  ,0.6,  *6F
           //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
-          if(line.contains("GGA") and line.split('*').count()==2) //
+          if(line.contains("GGA")) // Ищем строку GGA
+          if(line.split('*').count()==2) // проверяем, что есть контрольная сумма
           if(line.split(',').count()==15 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
             {
               // Разбиваем строку по запятой
@@ -239,8 +240,9 @@ void MainWindow::on_actionErrors_triggered()
           // Если строка содежит GGA
           // $GPGGA,113448.601,5452.3307572,N,08258.7870772,E,1,17,0.8,160.927,M,    ,M  ,0.6,  *6F
           //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
-          if(line.contains("GGA")) // Добавить проверку с контрольной суммой
-          if(line.split(',').count()==15) // Проверка на количество полей
+          if(line.contains("GGA")) // Ищем строку GGA
+          if(line.split('*').count()==2) // Проверяем, что есть контрольная сумма
+          if(line.split(',').count()==15 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
             {
               // Разбиваем строку по запятой
               QStringList nmea = line.split(',');
@@ -316,13 +318,13 @@ void MainWindow::on_actionErrors_triggered()
               //    diffTime.append(time.toTime_t() - time0);
               //ui->textBrowser->append(QString::number(time.toTime_t() - time0));
 
-              // Скорость
+              // Скорость по приращению координат (dS/dt)
               // if(diffTime[i]>0 && time0>0)
               //    speed.append(diffXY[i]/1000/(diffTime[i]/1000/60/60));
               //    ui->textBrowser->append(QString::number(diffXY[i]/1000/(diffTime[i]/1000/60/60)));
               }
 
-              // Сохраняем значения для (в след. итерации будут использоваться как предыдущие значения)
+              // Сохраняем значения (в след. итерации будут использоваться как предыдущие значения)
               X0=X; Y0=Y;// time0=time.toTime_t();
 
             // Значения времени
@@ -432,10 +434,10 @@ void MainWindow::on_actionRMC_triggered()
           // Если строка содежит RMC
           // $GPRMC,084202.200,A,5452.3265793,N,08258.8073766,E,000.0,337.6,290515,  ,  , A, S*11
           //    0      1       2      3       4     5         6   7    8      9    10 11 12 13
-          if(line.contains("RMC")) // Добавить проверку с контрольной суммой
-          if(line.split(',').count()==13) // Проверка на количество полей
+          if(line.contains("RMC")) // Ищем строку RMC и
+          if(line.split('*').count()==2) // Проверяем, что есть контрольная сумма
+          if(line.split(',').count()==13 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
             {
-
               line = line.split("*")[0];
               // Разбиваем строку по запятой
               QStringList nmea = line.split(',');
@@ -613,8 +615,9 @@ void MainWindow::on_actionGGA_Position_triggered()
           // Если строка содежит GGA
           // $GPGGA,113448.601,5452.3307572,N,08258.7870772,E,1,17,0.8,160.927,M,    ,M  ,0.6,  *6F
           //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
-          if(line.contains("GGA")) // Добавить проверку с контрольной суммой
-          if(line.split(',').count()==15) // Проверка на количество полей
+          if(line.contains("GGA")) // Ищем строку GGA
+          if(line.split('*').count()==2) // Проверяем, что есть контрольная сумма
+          if(line.split(',').count()==15 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
           {
 
               // Разбиваем строку по запятой
@@ -859,8 +862,9 @@ void MainWindow::on_actionBSS_Distance_triggered()
           // Если строка содежит GGA - Запоминаем тип решения
           // $GPGGA,113448.601,5452.3307572,N,08258.7870772,E,1,17,0.8,160.927,M,    ,M  ,0.6,  *6F
           //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
-          if(line.contains("GGA")) // Добавить проверку с контрольной суммой
-          if(line.split(',').count()==15)
+          if(line.contains("GGA")) // Ищем строку GGA
+          if(line.split('*').count()==2) // Проверяем, что есть контрольная сумма
+          if(line.split(',').count()==15 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
               {
               QStringList GGA = line.split(',');
               type = GGA[6];
@@ -876,8 +880,9 @@ void MainWindow::on_actionBSS_Distance_triggered()
           // Если строка содежит BSS
           // $PNVGBSS,82301,4,82297,15.196,1.6*66
           //    0        1  2   3      4    5
-          if(line.contains("BSS")) // Добавить проверку с контрольной суммой
-          if(line.split(',').count()==6) // Проверка на количество полей
+          if(line.contains("BSS")) // Ищем строку GGA
+          if(line.split('*').count()==2) //  и проверяем, что есть контрольная сумма
+          if(line.split(',').count()==6 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
           {
               // Отбрасываем контрольную сумму
               line = line.split('*')[0];
@@ -1076,8 +1081,9 @@ void MainWindow::on_actionGGA_Diff_Age_triggered()
           // Если строка содежит GGA
           // $GPGGA,113448.601,5452.3307572,N,08258.7870772,E,1,17,0.8,160.927,M,    ,M  ,0.6,  *6F
           //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
-          if(line.contains("GGA")) // Добавить проверку с контрольной суммой
-          if(line.split(',').count()==15) // Проверка на количество полей
+          if(line.contains("GGA")) // Ищем строку GGA
+          if(line.split('*').count()==2) // и проверяем, что есть контрольная сумма
+          if(line.split(',').count()==15 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
             {
               // Разбиваем строку по запятой
               QStringList nmea = line.split(',');
@@ -1219,8 +1225,9 @@ void MainWindow::on_pushButton_clicked()
           // Если строка содежит GGA - Запоминаем тип решения
           // $GPGGA,113448.601,5452.3307572,N,08258.7870772,E,1,17,0.8,160.927,M,    ,M  ,0.6,  *6F
           //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
-          if(line.contains("GGA")) // Добавить проверку с контрольной суммой
-          if(line.split(',').count()>14)
+          if(line.contains("GGA")) // Ищем строку GGA
+          if(line.split('*').count()==2) // проверяем, что есть контрольная сумма
+          if(line.split(',').count()==15 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
               {
               QStringList GGA = line.split(',');
               type = GGA[6];
@@ -1232,12 +1239,10 @@ void MainWindow::on_pushButton_clicked()
           // Если строка содежит BSS
           // $PNVGBSS,82301,4,82297,15.196,1.6*66
           //    0        1  2   3      4    5
-          if(line.contains("BSS")) // Добавить проверку с контрольной суммой
-          if(line.split(',').count()>5) // Проверка на количество полей
+          if(line.contains("BSS")) // Ищем строку BSS
+          if(line.split('*').count()==2) // проверяем, что есть контрольная сумма
+          if(line.split(',').count()==6 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
           {
-              // Отбрасываем контрольную сумму
-              //line = line.split('*')[0];
-
               // Разбиваем строку по запятой
               QStringList nmea = line.split(',');
 
@@ -1286,7 +1291,7 @@ void MainWindow::on_pushButton_clicked()
     }// !fileName.isEmpty()
 }
 
-// BLS - Базовая линия. Азимут Статистика --------------------------------------------------------------
+// BLS - Базовая линия. Азимут и Статистика --------------------------------------------------------------
 void MainWindow::on_actionBLS_triggered()
 {
     // Если fileName пустой - открыть Диалог.
@@ -1325,8 +1330,9 @@ void MainWindow::on_actionBLS_triggered()
           // Если строка содежит BLS
           // $PNVGBLS,-0.898,0.438,0.020,0.999,154.01,1.14,R*09
           //    0        1     2     3     4      5    6   7
-          if(line.contains("BLS")) // Добавить проверку с контрольной суммой
-          if(line.split(',').count()>7) // Проверка на количество полей
+          if(line.contains("BLS")) //Ищем строку GGA
+          if(line.split('*').count()==2) // проверяем, что есть контрольная сумма
+          if(line.split(',').count()==8 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
           {
               // Отбрасываем контрольную сумму
               line = line.split('*')[0];
@@ -1400,9 +1406,9 @@ void MainWindow::on_actionBLS_triggered()
 
        // Выводим статистику
        double Total=0, Fix=0, Float=0;
-       Fix = courseBLSR.count();
-       Float = courseBLSF.count();
-       Total = Fix + Float + courseBLSA.count();
+       Fix = courseBLSR.count(); // Количество значений RTK
+       Float = courseBLSF.count(); // Количество значений Float
+       Total = Fix + Float + courseBLSA.count(); // Всего
        // Общее количество точек
        ui->textBrowser->append("Total points: "+QString::number(Total));
        // Fix решений
@@ -1525,8 +1531,8 @@ void MainWindow::on_actionBSS_Total_Valid_triggered()
           // Если строка содежит GGA - Запоминаем тип решения
           // $GPGGA,113448.601,5452.3307572,N,08258.7870772,E,1,17,0.8,160.927,M,    ,M  ,0.6,  *6F
           //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
-          if(line.contains("GGA")) // Добавить проверку с контрольной суммой
-          if(line.split(',').count()==15)
+          if(line.contains("GGA") and line.split('*').count()==2) // Ищем строку GGA и проверяем, что есть контрольная сумма
+          if(line.split(',').count()==15 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
               {
               QStringList GGA = line.split(',');
               type = GGA[6];
@@ -1539,8 +1545,8 @@ void MainWindow::on_actionBSS_Total_Valid_triggered()
           // Если строка содежит BSS
           // $PNVGBSS,82301,4,82297,15.196,1.6*66
           //    0        1  2   3      4    5
-          if(line.contains("BSS")) // Добавить проверку с контрольной суммой
-          if(line.split(',').count()==6) // Проверка на количество полей
+          if(line.contains("BSS") and line.split('*').count()==2) // Ищем строку GGA и проверяем, что есть контрольная сумма
+          if(line.split(',').count()==6 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
           {
               // Отбрасываем контрольную сумму
               line = line.split('*')[0];
@@ -1691,8 +1697,8 @@ void MainWindow::on_actionHDT_Course_triggered()
           // Если строка содежит HDT
           // $GPHDT,153.89,T*03
           //    0      1   2
-          if(line.contains("HDT")) // Добавить проверку с контрольной суммой
-          if(line.split(',').count()==3) // Проверка на количество полей
+          if(line.contains("HDT") and line.split('*').count()==2) // Ищем строку GGA и проверяем, что есть контрольная сумма
+          if(line.split(',').count()==3 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
           {
               // Отбрасываем контрольную сумму
               line = line.split('*')[0];
