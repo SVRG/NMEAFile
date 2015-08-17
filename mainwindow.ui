@@ -22,44 +22,108 @@
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
-     <widget class="QCustomPlot" name="customPlot" native="true">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>0</number>
       </property>
-      <property name="minimumSize">
-       <size>
-        <width>0</width>
-        <height>200</height>
-       </size>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QTextBrowser" name="textBrowser">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="minimumSize">
-       <size>
-        <width>0</width>
-        <height>100</height>
-       </size>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>16777215</width>
-        <height>16777207</height>
-       </size>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
+      <widget class="QWidget" name="tab_Graph">
+       <attribute name="title">
+        <string>Graph</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_4">
+        <item>
+         <widget class="QCustomPlot" name="customPlot" native="true">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>200</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_Stat">
+       <attribute name="title">
+        <string>Stat</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QGroupBox" name="groupBox">
+          <property name="title">
+           <string>Options</string>
+          </property>
+          <widget class="QLineEdit" name="referenceValue">
+           <property name="geometry">
+            <rect>
+             <x>80</x>
+             <y>50</y>
+             <width>113</width>
+             <height>21</height>
+            </rect>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="pushButton">
+           <property name="geometry">
+            <rect>
+             <x>60</x>
+             <y>70</y>
+             <width>115</width>
+             <height>32</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Find</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="label">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>50</y>
+             <width>59</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Value</string>
+           </property>
+          </widget>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTextBrowser" name="textBrowser">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>100</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777207</height>
+           </size>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
      </widget>
     </item>
    </layout>
@@ -99,8 +163,11 @@
     <addaction name="separator"/>
     <addaction name="actionRMC"/>
     <addaction name="actionBSS_Distance"/>
+    <addaction name="actionBSS_Total_Valid"/>
     <addaction name="separator"/>
     <addaction name="actionShow_Legend"/>
+    <addaction name="actionBLS"/>
+    <addaction name="actionHDT_Course"/>
    </widget>
    <addaction name="menuNMEA"/>
    <addaction name="menuFile"/>
@@ -154,6 +221,9 @@
    </property>
   </action>
   <action name="actionGGA_Position">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>GGA Position</string>
    </property>
@@ -171,6 +241,21 @@
   <action name="actionY_Logarithmic">
    <property name="text">
     <string>Y Logarithmic</string>
+   </property>
+  </action>
+  <action name="actionBLS">
+   <property name="text">
+    <string>BLS Course</string>
+   </property>
+  </action>
+  <action name="actionBSS_Total_Valid">
+   <property name="text">
+    <string>BSS Total &amp; Valid</string>
+   </property>
+  </action>
+  <action name="actionHDT_Course">
+   <property name="text">
+    <string>HDT Course</string>
    </property>
   </action>
  </widget>

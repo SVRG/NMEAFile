@@ -38,6 +38,14 @@ private slots:
 
     void on_actionY_Logarithmic_triggered();
 
+    void on_pushButton_clicked();
+
+    void on_actionBLS_triggered();
+
+    void on_actionBSS_Total_Valid_triggered();
+
+    void on_actionHDT_Course_triggered();
+
 private:
     Ui::MainWindow *ui;
 };
