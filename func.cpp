@@ -19,8 +19,11 @@ QString func::CRC(QString nmea)
     QString s = "";
     s = QString::number(sum,16); //перевод в шестнадцатиричный формат с 2 - мя символами
 
-    // Перевод в Uppercase
+    // Проверка - если меньше 10 то добавить 0
+    if(s.toFloat()<10)
+        s="0"+s;
 
+    // Перевод в Uppercase
     return(s.toUpper());
     }
     else
