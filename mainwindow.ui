@@ -59,42 +59,25 @@
           <property name="title">
            <string>Options</string>
           </property>
-          <widget class="QLineEdit" name="referenceValue">
-           <property name="geometry">
-            <rect>
-             <x>80</x>
-             <y>50</y>
-             <width>113</width>
-             <height>21</height>
-            </rect>
-           </property>
-          </widget>
-          <widget class="QPushButton" name="pushButton">
-           <property name="geometry">
-            <rect>
-             <x>60</x>
-             <y>70</y>
-             <width>115</width>
-             <height>32</height>
-            </rect>
-           </property>
-           <property name="text">
-            <string>Find</string>
-           </property>
-          </widget>
-          <widget class="QLabel" name="label">
-           <property name="geometry">
-            <rect>
-             <x>10</x>
-             <y>50</y>
-             <width>59</width>
-             <height>16</height>
-            </rect>
-           </property>
-           <property name="text">
-            <string>Value</string>
-           </property>
-          </widget>
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <item>
+            <widget class="QPushButton" name="pushButton">
+             <property name="text">
+              <string>Find</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label">
+             <property name="text">
+              <string>Value</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="referenceValue"/>
+           </item>
+          </layout>
          </widget>
         </item>
         <item>
@@ -154,7 +137,9 @@
     </property>
     <addaction name="actionScale"/>
     <addaction name="actionScale_Y"/>
+    <addaction name="actionScale_XY"/>
     <addaction name="actionY_Logarithmic"/>
+    <addaction name="actionShow_Legend"/>
     <addaction name="separator"/>
     <addaction name="actionGGA_Position"/>
     <addaction name="actionNAV_Param"/>
@@ -165,9 +150,10 @@
     <addaction name="actionBSS_Distance"/>
     <addaction name="actionBSS_Total_Valid"/>
     <addaction name="separator"/>
-    <addaction name="actionShow_Legend"/>
     <addaction name="actionBLS"/>
+    <addaction name="actionBLS_Course_Difference"/>
     <addaction name="actionHDT_Course"/>
+    <addaction name="actionFind_Errors"/>
    </widget>
    <addaction name="menuNMEA"/>
    <addaction name="menuFile"/>
@@ -256,6 +242,21 @@
   <action name="actionHDT_Course">
    <property name="text">
     <string>HDT Course</string>
+   </property>
+  </action>
+  <action name="actionBLS_Course_Difference">
+   <property name="text">
+    <string>BLS Course Difference</string>
+   </property>
+  </action>
+  <action name="actionScale_XY">
+   <property name="text">
+    <string>Scale XY</string>
+   </property>
+  </action>
+  <action name="actionFind_Errors">
+   <property name="text">
+    <string>Find Errors</string>
    </property>
   </action>
  </widget>

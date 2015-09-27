@@ -46,6 +46,12 @@ private slots:
 
     void on_actionHDT_Course_triggered();
 
+    void on_actionBLS_Course_Difference_triggered();
+
+    void on_actionScale_XY_triggered();
+
+    void on_actionFind_Errors_triggered();
+
 private:
     Ui::MainWindow *ui;
 };

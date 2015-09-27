@@ -1,9 +1,9 @@
 /*
 Roadmap
 
-Добавить возможность выбирать и отображать данные из нескольких файлов
-Разбор склеенных строк?
-CRC - костыль с вычислением КС с 00/01 и тд.
+Добавить возможность выбирать и одновременно отображать данные из нескольких файлов
+Разбор склеенных строк? Когда в одной строке может быть несколько предложений. Либо неправильный перенос строки
+Добавить поиск и классификацию ошибок - CRC / Битые строки / Пропуски / Неправильный перенос...
 
 */
 
@@ -12,8 +12,8 @@ CRC - костыль с вычислением КС с 00/01 и тд.
 #include "ui_mainwindow.h"
 #include <QFileDialog>
 #include <QTextStream>
-#include <QtMath>
-//#include <QDateTime>
+//#include <QtMath> // func.h
+//#include <QDateTime> // Пока без времени
 #include "func.h"
 
 
@@ -32,6 +32,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+// ------------------------------------------------------------------------------------------------------
 // Открываем файл----------------------------------------------------------------------------------------
 void MainWindow::on_actionOpen_File_triggered()
 {
@@ -47,6 +48,7 @@ void MainWindow::on_actionOpen_File_triggered()
 
 }
 
+// ------------------------------------------------------------------------------------------------------
 // Подгоняем размер под график---------------------------------------------------------------------------
 void MainWindow::on_actionScale_triggered()
 {
@@ -62,14 +64,13 @@ void MainWindow::on_actionScale_triggered()
         ui->textBrowser->setText("Error: Grapph Count = 0. Please select correct NMEA File");
 }
 
-// Вывод навигационных параметров. Кол-во спутников в решении -------------------------------------------
+// ------------------------------------------------------------------------------------------------------
+// Вывод навигационных параметров. Кол-во спутников в решении
 void MainWindow::on_actionNAV_Param_triggered()
 {
     // Если fileName пустой - открыть Диалог.
     if(fileName.isEmpty())
-        {
-        fileName = QFileDialog::getOpenFileName(this, tr("Open File..."), QString(), tr("NMEA LOG-Files (*.nme *.log);;All Files (*)"));
-        }
+            MainWindow::on_actionOpen_File_triggered();
 
     // Если имя не пустое то загружаем содержимое
     if (!fileName.isEmpty())
@@ -103,7 +104,7 @@ void MainWindow::on_actionNAV_Param_triggered()
           //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
           if(line.contains("GGA")) // Ищем строку GGA
           if(line.split('*').count()==2) // проверяем, что есть контрольная сумма
-          if(line.split(',').count()==15 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
+          if(line.split(',').count()==15)// and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
             {
               // Разбиваем строку по запятой
               QStringList nmea = line.split(',');
@@ -143,47 +144,12 @@ void MainWindow::on_actionNAV_Param_triggered()
 
        // Used Sattelites
        ui->customPlot->clearGraphs();
-
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(0)->setData(timeLine1, usedSat1);
-       // give the axes some labels:
-       ui->customPlot->graph(0)->setPen(QPen(Qt::red));
-       ui->customPlot->xAxis->setLabel("Time");
-       ui->customPlot->yAxis->setLabel("Value");
-       ui->customPlot->yAxis->setScaleType(QCPAxis::stLinear);
-       //ui->customPlot->xAxis->setDateTimeFormat("hh:mm:ss");
-       //ui->customPlot->xAxis->setTickLabelType(QCPAxis::ltDateTime);
-       ui->customPlot->graph(0)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(0)->setName("3D/... Used Sattelites");
-
-       // Used Sattelites
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(1)->setData(timeLine4, usedSat4);
-       ui->customPlot->graph(1)->setPen(QPen(Qt::green));
-       ui->customPlot->graph(1)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(1)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(1)->setName("RTK Used Sattelites");
-
-       // Used Sattelites
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(2)->setData(timeLine5, usedSat5);
-       ui->customPlot->graph(2)->setPen(QPen(Qt::blue));
-       ui->customPlot->graph(2)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(2)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(2)->setName("Float Used Sattelites");
-
-       // same thing for graph 1, but only enlarge ranges (in case graph 1 is smaller than graph 0):
-       ui->customPlot->graph(0)->rescaleAxes();
-       //ui->customPlot->graph(1)->rescaleAxes();
-
-       // Note: we could have also just called customPlot->rescaleAxes(); instead
-       // Allow user to drag axis ranges with mouse, zoom with mouse wheel and select graphs by clicking:
-       ui->customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
-       //ui->customPlot->xAxis->setAutoTickLabels(false);
-       //ui->customPlot->xAxis->setTickVectorLabels(timeLables);
-
-       ui->customPlot->replot();
+       // 3D...
+       func::drawGraph(ui->customPlot,timeLine1,usedSat1,"Time","Value","3D/... Used Sattelites");
+       // Fix
+       func::drawGraph(ui->customPlot,timeLine4,usedSat4,"Time","Value","RTK Used Sattelites");
+       // Float
+       func::drawGraph(ui->customPlot,timeLine5,usedSat5,"Time","Value","Float Used Sattelites");
        }
        else
            ui->textBrowser->append("No GGA Data");
@@ -192,6 +158,7 @@ void MainWindow::on_actionNAV_Param_triggered()
     }
 }
 
+// ------------------------------------------------------------------------------------------------------
 // Показываем / Скрываем легенду-------------------------------------------------------------------------
 void MainWindow::on_actionShow_Legend_triggered()
 {
@@ -199,12 +166,13 @@ void MainWindow::on_actionShow_Legend_triggered()
     ui->customPlot->replot();
 }
 
-// Отлавливаем скачки: GGA Дельта по Координатам. В проекте - скорость----------------------------------------------
+// ------------------------------------------------------------------------------------------------------
+// Отлавливаем скачки: GGA Дельта по Координатам. В проекте - скорость-----------------------------------
 void MainWindow::on_actionErrors_triggered()
 {
     // Если fileName пустой - открыть Диалог.
     if(fileName.isEmpty())
-    fileName = QFileDialog::getOpenFileName(this, tr("Open File..."), QString(), tr("NMEA LOG-Files (*.nme *.log);;All Files (*)"));
+        MainWindow::on_actionOpen_File_triggered();
 
     // Если имя не пустое то загружаем содержимое
     if (!fileName.isEmpty())
@@ -242,7 +210,7 @@ void MainWindow::on_actionErrors_triggered()
           //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
           if(line.contains("GGA")) // Ищем строку GGA
           if(line.split('*').count()==2) // Проверяем, что есть контрольная сумма
-          if(line.split(',').count()==15 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
+          if(line.split(',').count()==15)// and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
             {
               // Разбиваем строку по запятой
               QStringList nmea = line.split(',');
@@ -342,47 +310,13 @@ void MainWindow::on_actionErrors_triggered()
        // diffXY Graph
        ui->customPlot->clearGraphs();
 
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(0)->setData(timeXY1, diffXY1);
-       // give the axes some labels:
-       ui->customPlot->graph(0)->setPen(QPen(Qt::red));
-       ui->customPlot->xAxis->setLabel("Time");
-       ui->customPlot->yAxis->setLabel("Value");
-       ui->customPlot->yAxis->setScaleType(QCPAxis::stLinear);
-       ui->customPlot->graph(0)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(0)->setName("3D XY Difference");
 
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(1)->setData(timeXY5, diffXY5);
-       // give the axes some labels:
-       ui->customPlot->graph(1)->setPen(QPen(Qt::blue));
-       ui->customPlot->xAxis->setLabel("Time");
-       ui->customPlot->yAxis->setLabel("Value");
-       ui->customPlot->graph(1)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(1)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(1)->setName("Float XY Difference");
-
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(2)->setData(timeXY4, diffXY4);
-       // give the axes some labels:
-       ui->customPlot->graph(2)->setPen(QPen(Qt::green));
-       ui->customPlot->xAxis->setLabel("Time");
-       ui->customPlot->yAxis->setLabel("Value");
-       ui->customPlot->graph(2)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(2)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(2)->setName("RTK XY Difference");
-
-
-       // Allow user to drag axis ranges with mouse, zoom with mouse wheel and select graphs by clicking:
-       ui->customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
-       // Установка значений времени
-       //ui->customPlot->xAxis->setAutoTickLabels(false);
-       //ui->customPlot->xAxis->setTickVectorLabels(timeLables);
-
-       ui->customPlot->graph(0)->rescaleAxes();
-       ui->customPlot->replot();
-
+       // 3D...
+       func::drawGraph(ui->customPlot,timeXY1,diffXY1,"Time","Value","3D XY Difference");
+       // Fix
+       func::drawGraph(ui->customPlot,timeXY4,diffXY4,"Time","Value","RTK XY Difference");
+       // Float
+       func::drawGraph(ui->customPlot,timeXY5,diffXY5,"Time","Value","Float XY Difference");
        }
        else
            ui->textBrowser->append("No GGA Data");
@@ -395,12 +329,13 @@ void MainWindow::on_actionErrors_triggered()
         ui->textBrowser->append("File Name is Empty");
 }
 
-// Рабзобр RMC. Скорость, Курс-----------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------
+// Рабзобр RMC. Скорость, Курс---------------------------------------------------------------------------
 void MainWindow::on_actionRMC_triggered()
 {
     // Если fileName пустой - открыть Диалог.
     if(fileName.isEmpty())
-    fileName = QFileDialog::getOpenFileName(this, tr("Open File..."), QString(), tr("NMEA LOG-Files (*.nme *.log);;All Files (*)"));
+        MainWindow::on_actionOpen_File_triggered();
 
     // Если имя не пустое то загружаем содержимое
     if (!fileName.isEmpty())
@@ -432,11 +367,12 @@ void MainWindow::on_actionRMC_triggered()
           QString line = in.readLine();
 
           // Если строка содежит RMC
-          // $GPRMC,084202.200,A,5452.3265793,N,08258.8073766,E,000.0,337.6,290515,  ,  , A, S*11
+          // $GPRMC,121747.10, A,5543.3054228,N,03755.4196557,E,0.06, 0.00,310815, 0.0,E, A*3E
+          // $GPRMC,084202.200,A,5452.3265793,N,08258.8073766,E,000.0,337.6,290515,  ,  , A, S*11 - Что за S?
           //    0      1       2      3       4     5         6   7    8      9    10 11 12 13
           if(line.contains("RMC")) // Ищем строку RMC и
           if(line.split('*').count()==2) // Проверяем, что есть контрольная сумма
-          if(line.split(',').count()==13 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
+          if(line.split(',').count()>=13)// and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
             {
               line = line.split("*")[0];
               // Разбиваем строку по запятой
@@ -498,57 +434,15 @@ void MainWindow::on_actionRMC_triggered()
 
        // Очищаем данные Графика
        ui->customPlot->clearGraphs();
-       ui->customPlot->clearItems();
 
-       // Скорость 3D
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(0)->setData(timeA, speedA);
-       // give the axes some labels:
-       ui->customPlot->graph(0)->setPen(QPen(Qt::red));
-       ui->customPlot->xAxis->setLabel("Num");
-       ui->customPlot->yAxis->setLabel("Value");
-       ui->customPlot->yAxis->setScaleType(QCPAxis::stLinear);
-       //ui->customPlot->xAxis->setDateTimeFormat("hh:mm:ss");
-       //ui->customPlot->xAxis->setTickLabelType(QCPAxis::ltDateTime);
-       ui->customPlot->graph(0)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(0)->setName("Speed 3D/...");
-
-       // Скорость RTK
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(1)->setData(timeR, speedR);
-       ui->customPlot->graph(1)->setPen(QPen(Qt::green));
-       ui->customPlot->graph(1)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(1)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(1)->setName("Speed RTK");
-
-
-       // Скорость Float
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(2)->setData(timeF, speedF);
-       ui->customPlot->graph(2)->setPen(QPen(Qt::blue));
-       ui->customPlot->graph(2)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(2)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(2)->setName("Speed Float");
-
+       // 3D...
+       func::drawGraph(ui->customPlot,timeA,speedA,"Time","Value","Speed 3D");
+       // Fix
+       func::drawGraph(ui->customPlot,timeR,speedR,"Time","Value","Speed RTK");
+       // Float
+       func::drawGraph(ui->customPlot,timeF,speedF,"Time","Value","Speed Float");
        // Курс
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(3)->setData(timeCourse, valueCourse);
-       ui->customPlot->graph(3)->setPen(QPen(Qt::black));
-       ui->customPlot->graph(3)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(3)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(3)->setName("Course");
-
-
-       // Allow user to drag axis ranges with mouse, zoom with mouse wheel and select graphs by clicking:
-       ui->customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
-       // Установка значений времени
-       //ui->customPlot->xAxis->setAutoTickLabels(false);
-       //ui->customPlot->xAxis->setTickVectorLabels(timeLables);
-
-       ui->customPlot->graph(0)->rescaleAxes();
-       ui->customPlot->replot();
-
+       func::drawGraph(ui->customPlot,timeCourse,valueCourse,"Time","Value","Course");
        }
        else
            ui->textBrowser->append("No RMC Data");
@@ -561,6 +455,7 @@ void MainWindow::on_actionRMC_triggered()
         ui->textBrowser->append("File Name is Empty");
 }
 
+// ------------------------------------------------------------------------------------------------------
 // Масштабирование по Y. Переделать!
 void MainWindow::on_actionScale_Y_triggered()
 {
@@ -574,12 +469,13 @@ void MainWindow::on_actionScale_Y_triggered()
       ui->textBrowser->setText("Grapph Count = 0");
 }
 
+// ------------------------------------------------------------------------------------------------------
 // Вывод трека GGA----------------------------------------------------------------------------------------
 void MainWindow::on_actionGGA_Position_triggered()
 {
     // Если fileName пустой - открыть Диалог.
     if(fileName.isEmpty())
-    fileName = QFileDialog::getOpenFileName(this, tr("Open File..."), QString(), tr("NMEA LOG-Files (*.nme *.log);;All Files (*)"));
+        MainWindow::on_actionOpen_File_triggered();
 
     // Если имя не пустое то загружаем содержимое
     if (!fileName.isEmpty())
@@ -617,7 +513,7 @@ void MainWindow::on_actionGGA_Position_triggered()
           //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
           if(line.contains("GGA")) // Ищем строку GGA
           if(line.split('*').count()==2) // Проверяем, что есть контрольная сумма
-          if(line.split(',').count()==15 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
+          if(line.split(',').count()==15)// and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
           {
 
               // Разбиваем строку по запятой
@@ -642,7 +538,7 @@ void MainWindow::on_actionGGA_Position_triggered()
               B = QString(BStr.left(2)).toDouble();
               // Долгота - Градусы
               L = QString(LStr.left(3)).toDouble();
-              // Высота над элипсойдом
+              // Высота над эллипсоидом = высота над геоидом + превышение геоида над эллипсоидом
               H = QString(nmea[9]).toDouble()+QString(nmea[11]).toDouble();
 
               // Широта/Долгота - Градусы + Минуты. Переводим в радианы.
@@ -657,12 +553,12 @@ void MainWindow::on_actionGGA_Position_triggered()
               /*double N    = 6378137. / sqrt(1. - 0.00669437999 * sin(B) * sin(B));
               X = (N + H) * cos(L) * cos(B);
               Y = (N + H) * sin(L) * cos(B);
-              //Z = ((1. - 0.00669437999) * N + H) * sin(B);
+              Z = ((1. - 0.00669437999) * N + H) * sin(B);
               */
 
               // Вариант трека по приращениям (Storegis)
               // Начальная точка. Вычисляем коэффициенты один раз?
-              if(i==1)
+              if(i==1) // Первое валидное решение
               {
               // Константы
               // Эксцентриситет
@@ -742,56 +638,13 @@ void MainWindow::on_actionGGA_Position_triggered()
        ui->textBrowser->append("Not Valid points: "+QString::number(notValid));
 
        ui->customPlot->clearGraphs();
-       ui->customPlot->clearItems();
-       // Рисуем графики
-       // 3D/3D Diff
-       // create graph and assign data to it:
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(0)->setData(X1, Y1);
-       // give the axes some labels:
-       ui->customPlot->graph(0)->setPen(QPen(Qt::red));
-       ui->customPlot->xAxis->setLabel("X");
-       ui->customPlot->yAxis->setLabel("Y");
-       ui->customPlot->yAxis->setScaleType(QCPAxis::stLinear);
-       ui->customPlot->graph(0)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(0)->setName("3D/3D Diff");
 
-       // RTK Fix
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(1)->setData(X4, Y4);
-       ui->customPlot->graph(1)->setPen(QPen(Qt::green));
-       ui->customPlot->graph(1)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(1)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(1)->setName("RTK Fix");
-
-       // RTK Float
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(2)->setData(X5, Y5);
-       ui->customPlot->graph(2)->setPen(QPen(Qt::blue));
-       ui->customPlot->graph(2)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(2)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(2)->setName("RTK Float");
-
-       // Test
-       /*ui->customPlot->addGraph();
-       ui->customPlot->graph(3)->setData(X0, Y0);
-       ui->customPlot->graph(3)->setPen(QPen(Qt::black));
-       ui->customPlot->graph(3)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(3)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(3)->setName("PR");
-       */
-
-       // Подгоняем размер. Вероятно нужно оставить одну строку. Проверить!
-       ui->customPlot->graph(0)->rescaleAxes();
-       ui->customPlot->graph(1)->rescaleAxes();
-
-       // Note: we could have also just called customPlot->rescaleAxes(); instead
-       // Allow user to drag axis ranges with mouse, zoom with mouse wheel and select graphs by clicking:
-       ui->customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
-
-       //ui->customPlot->yAxis->setNumberPrecision(0);
-       //ui->customPlot->xAxis->setNumberPrecision(0);
+       // 3D...
+       func::drawGraph(ui->customPlot,X1,Y1,"X","Y","3D");
+       // Fix
+       func::drawGraph(ui->customPlot,X4,Y4,"X","Y","RTK");
+       // Float
+       func::drawGraph(ui->customPlot,X5,Y5,"X","Y","Float");
 
        ui->customPlot->yAxis->setAutoTickCount(10);
        ui->customPlot->xAxis->setAutoTickCount(10);
@@ -802,8 +655,6 @@ void MainWindow::on_actionGGA_Position_triggered()
        ui->customPlot->yAxis->setAutoSubTicks(false);
        ui->customPlot->xAxis->setAutoSubTicks(false);
 
-       //ui->customPlot->yAxis->setTickStep(10);
-       //ui->customPlot->xAxis->setTickStep(10);
        ui->customPlot->replot();
        }
        // Если массивы векторов пустые то сообщаем, что нет GGA данных
@@ -815,7 +666,8 @@ void MainWindow::on_actionGGA_Position_triggered()
     }
 }
 
-// BSS + GGA Дистанция до Базы и Вычисление статистики ----------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------
+// BSS + GGA Дистанция до Базы и Вычисление статистики --------------------------------------------------
 void MainWindow::on_actionBSS_Distance_triggered()
 {
     // Если fileName пустой - открыть Диалог.
@@ -864,7 +716,7 @@ void MainWindow::on_actionBSS_Distance_triggered()
           //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
           if(line.contains("GGA")) // Ищем строку GGA
           if(line.split('*').count()==2) // Проверяем, что есть контрольная сумма
-          if(line.split(',').count()==15 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
+          if(line.split(',').count()==15)// and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
               {
               QStringList GGA = line.split(',');
               type = GGA[6];
@@ -880,9 +732,9 @@ void MainWindow::on_actionBSS_Distance_triggered()
           // Если строка содежит BSS
           // $PNVGBSS,82301,4,82297,15.196,1.6*66
           //    0        1  2   3      4    5
-          if(line.contains("BSS")) // Ищем строку GGA
+          if(line.contains("BSS")) // Ищем строку BSS
           if(line.split('*').count()==2) //  и проверяем, что есть контрольная сумма
-          if(line.split(',').count()==6 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
+          if(line.split(',').count()==6)// and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
           {
               // Отбрасываем контрольную сумму
               line = line.split('*')[0];
@@ -931,27 +783,13 @@ void MainWindow::on_actionBSS_Distance_triggered()
        // Если в массиве есть данные
        if(!distanceBSS1.isEmpty() || !distanceBSS4.isEmpty() || !distanceBSS5.isEmpty())
        {
-       ui->customPlot->clearGraphs();
-
        // Вычисляем статистику
-       // Сумма значений
-       double summDistance=0;
-       foreach(double dist, distanceBSS4)
-           summDistance+=dist;
+       double cep; // СКО
+       double midDistance; // Среднее
+       func::statMID_CEP(distanceBSS4,cep,midDistance); // Вычисляем Среднее арифметическое и СКО
 
-       // Среднее арифметическое значение
-       double midDistance=summDistance/distanceBSS4.count();
        ui->textBrowser->append("Mid: "+QString::number(midDistance));
-
-       // СКО
-       double cep=0;
-       foreach (double dist, distanceBSS4) {
-           cep+=(dist-midDistance)*(dist-midDistance);
-       }
-       cep=cep/distanceBSS4.count();
-       cep=sqrt(cep);
        ui->textBrowser->append("CEP: "+QString::number(cep));
-
 
        // Выводим статистику
        double Total=0, Fix=0, Float=0;
@@ -975,59 +813,18 @@ void MainWindow::on_actionBSS_Distance_triggered()
        xMid.append(i);
 
        // Рисуем графики
-       // Distance 3D/...
-       // create graph and assign data to it:
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(0)->setData(timeLine1, distanceBSS1);
-       // give the axes some labels:
-       ui->customPlot->graph(0)->setPen(QPen(Qt::red));
-       ui->customPlot->xAxis->setLabel("Time");
-       ui->customPlot->yAxis->setLabel("m");
-       ui->customPlot->yAxis->setScaleType(QCPAxis::stLinear);
-       ui->customPlot->graph(0)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(0)->setName("3D/... Distance");
 
-       // Distance Fix
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(1)->setData(timeLine4, distanceBSS4);
-       // give the axes some labels:
-       ui->customPlot->graph(1)->setPen(QPen(Qt::green));
-       ui->customPlot->graph(1)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(1)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(1)->setName("RTK Distance");
+       ui->customPlot->clearGraphs();
 
-       // Distance Float
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(2)->setData(timeLine5, distanceBSS5);
-       // give the axes some labels:
-       ui->customPlot->graph(2)->setPen(QPen(Qt::blue));
-       ui->customPlot->graph(2)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(2)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(2)->setName("Float Distance");
+       // 3D...
+       func::drawGraph(ui->customPlot,timeLine1,distanceBSS1,"X","Y","3D");
+       // Fix
+       func::drawGraph(ui->customPlot,timeLine4,distanceBSS4,"X","Y","RTK");
+       // Float
+       func::drawGraph(ui->customPlot,timeLine5,distanceBSS5,"X","Y","Float");
 
-       // Distance Среднее
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(3)->setData(xMid, yMid);
-       // give the axes some labels:
-       ui->customPlot->graph(3)->setPen(QPen(Qt::black));
-       ui->customPlot->graph(3)->setLineStyle(QCPGraph::lsLine);
-       ui->customPlot->graph(3)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(3)->setName("RTK Middle");
-
-
-       // Подгоняем размер. Вероятно нужно оставить одну строку. Проверить!
-       ui->customPlot->graph(1)->rescaleAxes();
-
-       // Note: we could have also just called customPlot->rescaleAxes(); instead
-       // Allow user to drag axis ranges with mouse, zoom with mouse wheel and select graphs by clicking:
-       ui->customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
-
-       // Значения времени
-       //ui->customPlot->xAxis->setAutoTickLabels(false);
-       //ui->customPlot->xAxis->setTickVectorLabels(timeLables);
-
-       ui->customPlot->replot();
+       // Mid
+       func::drawGraph(ui->customPlot,xMid,yMid,"X","Y","RTK Middle");
        }
        // Если массивы векторов пустые то сообщаем, что нет GGA данных
        else {
@@ -1038,7 +835,8 @@ void MainWindow::on_actionBSS_Distance_triggered()
     }
 }
 
-// GGA Возраст поправки---------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------
+// GGA Возраст поправки
 void MainWindow::on_actionGGA_Diff_Age_triggered()
 {
     // Если fileName пустой - открыть Диалог.
@@ -1083,7 +881,7 @@ void MainWindow::on_actionGGA_Diff_Age_triggered()
           //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
           if(line.contains("GGA")) // Ищем строку GGA
           if(line.split('*').count()==2) // и проверяем, что есть контрольная сумма
-          if(line.split(',').count()==15 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
+          if(line.split(',').count()==15)// and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
             {
               // Разбиваем строку по запятой
               QStringList nmea = line.split(',');
@@ -1119,49 +917,12 @@ void MainWindow::on_actionGGA_Diff_Age_triggered()
        {
        ui->customPlot->clearGraphs();
 
-       // Diff Age
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(0)->setData(timeLine1, diffAge1);
-       // give the axes some labels:
-       ui->customPlot->graph(0)->setPen(QPen(Qt::red));
-       ui->customPlot->xAxis->setLabel("Time");
-       ui->customPlot->yAxis->setLabel("Value");
-       ui->customPlot->yAxis->setScaleType(QCPAxis::stLinear);
-       //ui->customPlot->xAxis->setDateTimeFormat("hh:mm:ss");
-       //ui->customPlot->xAxis->setTickLabelType(QCPAxis::ltDateTime);
-       ui->customPlot->graph(0)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(0)->setName("3D/... Diff Age");
-
-       // Diff Age
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(1)->setData(timeLine4, diffAge4);
-       ui->customPlot->graph(1)->setPen(QPen(Qt::green));
-       ui->customPlot->graph(1)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(1)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(1)->setName("RTK Diff Age");
-
-       // Diff Age
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(2)->setData(timeLine5, diffAge5);
-       ui->customPlot->graph(2)->setPen(QPen(Qt::blue));
-       ui->customPlot->graph(2)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(2)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(2)->setName("Float Diff Age");
-
-       // Доработать масштабирование!
-       ui->customPlot->graph(0)->rescaleAxes();
-       //ui->customPlot->graph(1)->rescaleAxes();
-
-       // Note: we could have also just called customPlot->rescaleAxes(); instead
-       // Allow user to drag axis ranges with mouse, zoom with mouse wheel and select graphs by clicking:
-       ui->customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
-
-       // Значение времени
-       //ui->customPlot->xAxis->setAutoTickLabels(false);
-       //ui->customPlot->xAxis->setTickVectorLabels(timeLables);
-
-       ui->customPlot->replot();
+       // 3D...
+       func::drawGraph(ui->customPlot,timeLine1,diffAge1,"Time","Value","3D/... Diff Age");
+       // Fix
+       func::drawGraph(ui->customPlot,timeLine4,diffAge4,"Time","Value","RTK Diff Age");
+       // Float
+       func::drawGraph(ui->customPlot,timeLine5,diffAge5,"Time","Value","Float Diff Age");
        }
        else
            ui->textBrowser->append("No GGA Data");
@@ -1170,7 +931,8 @@ void MainWindow::on_actionGGA_Diff_Age_triggered()
     }
 }
 
-// Логарифмическая шкала Y ---------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------
+// Логарифмическая шкала Y
 void MainWindow::on_actionY_Logarithmic_triggered()
 {
 //ui->menuView->
@@ -1182,7 +944,8 @@ void MainWindow::on_actionY_Logarithmic_triggered()
 }
 
 
-// BSS+GGA Поиск предложений где значения отличаются на 10mm + 1ppm -----------------------------------------------
+// ------------------------------------------------------------------------------------------------------
+// BSS+GGA Поиск предложений где значения отличаются на 10mm + 1ppm -------------------------------------
 void MainWindow::on_pushButton_clicked()
 {
     // Если fileName пустой - открыть Диалог.
@@ -1227,7 +990,7 @@ void MainWindow::on_pushButton_clicked()
           //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
           if(line.contains("GGA")) // Ищем строку GGA
           if(line.split('*').count()==2) // проверяем, что есть контрольная сумма
-          if(line.split(',').count()==15 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
+          if(line.split(',').count()==15)// and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
               {
               QStringList GGA = line.split(',');
               type = GGA[6];
@@ -1241,7 +1004,7 @@ void MainWindow::on_pushButton_clicked()
           //    0        1  2   3      4    5
           if(line.contains("BSS")) // Ищем строку BSS
           if(line.split('*').count()==2) // проверяем, что есть контрольная сумма
-          if(line.split(',').count()==6 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
+          if(line.split(',').count()==6)// and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
           {
               // Разбиваем строку по запятой
               QStringList nmea = line.split(',');
@@ -1291,7 +1054,8 @@ void MainWindow::on_pushButton_clicked()
     }// !fileName.isEmpty()
 }
 
-// BLS - Базовая линия. Азимут и Статистика --------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------
+// BLS - Базовая линия. Азимут и Статистика -------------------------------------------------------------
 void MainWindow::on_actionBLS_triggered()
 {
     // Если fileName пустой - открыть Диалог.
@@ -1317,7 +1081,7 @@ void MainWindow::on_actionBLS_triggered()
        // QVector<double> distanceBLSA, timeLineA, distanceBLSR, timeLineR, distanceBLSF, timeLineF;
 
        // Массив Азимутов и время(номер предложения)
-       QVector<double> courseBLSA, timeLineA, courseBLSR, timeLineR, courseBLSF, timeLineF;
+       QVector<double> courseBLSA, timeLineA, courseBLSR, timeLineR, courseBLSF, timeLineF, baseLine, timeLine;
 
        // Счетчик.
        int i=0;
@@ -1330,9 +1094,9 @@ void MainWindow::on_actionBLS_triggered()
           // Если строка содежит BLS
           // $PNVGBLS,-0.898,0.438,0.020,0.999,154.01,1.14,R*09
           //    0        1     2     3     4      5    6   7
-          if(line.contains("BLS")) //Ищем строку GGA
+          if(line.contains("BLS")) //Ищем строку BLS
           if(line.split('*').count()==2) // проверяем, что есть контрольная сумма
-          if(line.split(',').count()==8 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
+          if(line.split(',').count()==8)// and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
           {
               // Отбрасываем контрольную сумму
               line = line.split('*')[0];
@@ -1343,30 +1107,36 @@ void MainWindow::on_actionBLS_triggered()
               // Тип решения
               QString type = nmea[7];
 
+              // Курс
+              double course = QString(nmea[5]).toDouble();
+              // - переводим в 0-180 для удаления обрывов 0->360 и 360->0
+              //if(course>180)
+              //      course=360-course;
+
+              // Добавляем длину базовой линии
+              baseLine.append(QString(nmea[4]).toDouble());
+              timeLine.append(i);
+
               // Разбиваем данные по типу решения
               // Если тип решения RTK Fix
               if(type=="R")
               {
                //   distanceBSSR.append(QString(nmea[4]).toDouble());
-                  courseBLSR.append(QString(nmea[5]).toDouble());
+                  courseBLSR.append(course);
                   timeLineR.append(i);
               }
               // RTK Float
               else if (type=="F") {
                   //   distanceBSSR.append(QString(nmea[4]).toDouble());
-                     courseBLSF.append(QString(nmea[5]).toDouble());
+                  courseBLSF.append(course);
                   timeLineF.append(i);
               }
               else
               // Остальные - 3D/3D Diff/DR/ n/a ...
               {
-              // Если расстояние адекватное. Доработать!
-              if(QString(nmea[4]).toDouble()<20000)
-                  {
-                  //   distanceBSSR.append(QString(nmea[4]).toDouble());
-                  courseBLSA.append(QString(nmea[5]).toDouble());
+                  //   distanceBLSR.append(QString(nmea[4]).toDouble());
+                  courseBLSA.append(course);
                   timeLineA.append(i);
-                  }
               }
 
               // Счетчик
@@ -1382,26 +1152,14 @@ void MainWindow::on_actionBLS_triggered()
        // if(!distanceBLSR.isEmpty() || !distanceBLSF.isEmpty() || !distanceBLSA.isEmpty())
        if(!courseBLSR.isEmpty() || !courseBLSF.isEmpty() || !courseBLSA.isEmpty())
        {
-       ui->customPlot->clearGraphs();
-
        // Вычисляем статистику
-       // Сумма значений
-       double summCourse=0;
-       foreach(double course, courseBLSR)
-           summCourse+=course;
 
-       // Среднее арифметическое значение
-       double mid=summCourse/courseBLSR.count();
+       double mid=0; // Среднее арифметическое значение
+       double cep=0; // СКО
+
+       func::statMID_CEP(courseBLSR,cep,mid); // Вычисляем среднее и СКО
        ui->textBrowser->append("Mid: "+QString::number(mid));
-
-       // СКО
-       double cep=0;
-       foreach (double course, courseBLSR) {
-           cep+=(course-mid)*(course-mid);
-       }
-       cep=cep/courseBLSR.count();
-       cep=sqrt(cep);
-       ui->textBrowser->append("CEP: "+QString::number(cep));
+       ui->textBrowser->append("CEP: "+QString::number(cep));// СКО
 
 
        // Выводим статистику
@@ -1425,60 +1183,17 @@ void MainWindow::on_actionBLS_triggered()
        xMid.append(0);
        xMid.append(i);
 
-       // Рисуем графики
-       // Distance 3D/...
-       // create graph and assign data to it:
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(0)->setData(timeLineA, courseBLSA);
-       // give the axes some labels:
-       ui->customPlot->graph(0)->setPen(QPen(Qt::red));
-       ui->customPlot->xAxis->setLabel("Time");
-       ui->customPlot->yAxis->setLabel("m");
-       ui->customPlot->yAxis->setScaleType(QCPAxis::stLinear);
-       ui->customPlot->graph(0)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(0)->setName("3D/... Course");
-
-       // Distance Fix
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(1)->setData(timeLineR, courseBLSR);
-       // give the axes some labels:
-       ui->customPlot->graph(1)->setPen(QPen(Qt::green));
-       ui->customPlot->graph(1)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(1)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(1)->setName("RTK Course");
-
-       // Distance Float
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(2)->setData(timeLineF, courseBLSF);
-       // give the axes some labels:
-       ui->customPlot->graph(2)->setPen(QPen(Qt::blue));
-       ui->customPlot->graph(2)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(2)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(2)->setName("Float Course");
-
-       // Distance Среднее
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(3)->setData(xMid, yMid);
-       // give the axes some labels:
-       ui->customPlot->graph(3)->setPen(QPen(Qt::black));
-       ui->customPlot->graph(3)->setLineStyle(QCPGraph::lsLine);
-       ui->customPlot->graph(3)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(3)->setName("RTK Middle");
-
-
-       // Подгоняем размер. Вероятно нужно оставить одну строку. Проверить!
-       ui->customPlot->graph(1)->rescaleAxes();
-
-       // Note: we could have also just called customPlot->rescaleAxes(); instead
-       // Allow user to drag axis ranges with mouse, zoom with mouse wheel and select graphs by clicking:
-       ui->customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
-
-       // Значения времени
-       //ui->customPlot->xAxis->setAutoTickLabels(false);
-       //ui->customPlot->xAxis->setTickVectorLabels(timeLables);
-
-       ui->customPlot->replot();
+       ui->customPlot->clearGraphs();
+       // 3D...
+       func::drawGraph(ui->customPlot,timeLineA,courseBLSA,"Time","Value","3D/... Course");
+       // Fix
+       func::drawGraph(ui->customPlot,timeLineR,courseBLSR,"Time","Value","RTK Course");
+       // Float
+       func::drawGraph(ui->customPlot,timeLineF,courseBLSF,"Time","Value","Float Course");
+       // Длина базовой линии
+       func::drawGraph(ui->customPlot,timeLine,baseLine,"Time","Value","Baseline length");
+       // Среднее
+       func::drawGraph(ui->customPlot,xMid,xMid,"Time","Value","RTK Middle");
        }
        // Если массивы векторов пустые то сообщаем, что нет BLS данных
        else {
@@ -1489,7 +1204,8 @@ void MainWindow::on_actionBLS_triggered()
     }
 }
 
-// BSS График счетчика валидных и всех значений ----------------------------------------------------
+// ------------------------------------------------------------------------------------------------------
+// BSS График счетчика валидных и всех значений
 void MainWindow::on_actionBSS_Total_Valid_triggered()
 {
     // Если fileName пустой - открыть Диалог.
@@ -1532,7 +1248,7 @@ void MainWindow::on_actionBSS_Total_Valid_triggered()
           // $GPGGA,113448.601,5452.3307572,N,08258.7870772,E,1,17,0.8,160.927,M,    ,M  ,0.6,  *6F
           //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
           if(line.contains("GGA") and line.split('*').count()==2) // Ищем строку GGA и проверяем, что есть контрольная сумма
-          if(line.split(',').count()==15 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
+          if(line.split(',').count()==15)// and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
               {
               QStringList GGA = line.split(',');
               type = GGA[6];
@@ -1545,8 +1261,8 @@ void MainWindow::on_actionBSS_Total_Valid_triggered()
           // Если строка содежит BSS
           // $PNVGBSS,82301,4,82297,15.196,1.6*66
           //    0        1  2   3      4    5
-          if(line.contains("BSS") and line.split('*').count()==2) // Ищем строку GGA и проверяем, что есть контрольная сумма
-          if(line.split(',').count()==6 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
+          if(line.contains("BSS") and line.split('*').count()==2) // Ищем строку BSS и проверяем, что есть контрольная сумма
+          if(line.split(',').count()==6)// and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
           {
               // Отбрасываем контрольную сумму
               line = line.split('*')[0];
@@ -1595,58 +1311,14 @@ void MainWindow::on_actionBSS_Total_Valid_triggered()
        ui->customPlot->clearGraphs();
 
        // Рисуем графики
-
-       // 3D/...
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(0)->setData(timeLine1, dataBSS1);
-       // give the axes some labels:
-       ui->customPlot->graph(0)->setPen(QPen(Qt::red));
-       ui->customPlot->xAxis->setLabel("Time");
-       ui->customPlot->yAxis->setLabel("m");
-       ui->customPlot->yAxis->setScaleType(QCPAxis::stLinear);
-       ui->customPlot->graph(0)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(0)->setName("3D/... Valid Numb");
-
+       // 3D...
+       func::drawGraph(ui->customPlot,timeLine1,dataBSS1,"Time","Value","3D/... Valid Numb");
        // Fix
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(1)->setData(timeLine4, dataBSS4);
-       // give the axes some labels:
-       ui->customPlot->graph(1)->setPen(QPen(Qt::green));
-       ui->customPlot->graph(1)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(1)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(1)->setName("RTK Valid Numb");
-
+       func::drawGraph(ui->customPlot,timeLine4,dataBSS4,"Time","Value","RTK Valid Numb");
        // Float
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(2)->setData(timeLine5, dataBSS5);
-       // give the axes some labels:
-       ui->customPlot->graph(2)->setPen(QPen(Qt::blue));
-       ui->customPlot->graph(2)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(2)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(2)->setName("Float Valid Numb");
-
-       // Diff Age
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(3)->setData(timeLineDA, diffAge);
-       // give the axes some labels:
-       ui->customPlot->graph(3)->setPen(QPen(Qt::black));
-       ui->customPlot->graph(3)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(3)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(3)->setName("Float Distance");
-
-       // Подгоняем размер. Вероятно нужно оставить одну строку. Проверить!
-       ui->customPlot->graph(1)->rescaleAxes();
-
-       // Note: we could have also just called customPlot->rescaleAxes(); instead
-       // Allow user to drag axis ranges with mouse, zoom with mouse wheel and select graphs by clicking:
-       ui->customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
-
-       // Значения времени
-       //ui->customPlot->xAxis->setAutoTickLabels(false);
-       //ui->customPlot->xAxis->setTickVectorLabels(timeLables);
-
-       ui->customPlot->replot();
+       func::drawGraph(ui->customPlot,timeLine5,dataBSS5,"Time","Value","Float Valid Numb");
+       // Длина базовой линии
+       func::drawGraph(ui->customPlot,timeLineDA,diffAge,"Time","Value","Diff Age");
        }
        // Если массивы векторов пустые то сообщаем, что нет GGA данных
        else {
@@ -1658,6 +1330,7 @@ void MainWindow::on_actionBSS_Total_Valid_triggered()
 }
 
 
+// ------------------------------------------------------------------------------------------------------
 // HDT - Азимут и статистика ---------------------------------------------------------------
 void MainWindow::on_actionHDT_Course_triggered()
 {
@@ -1697,8 +1370,8 @@ void MainWindow::on_actionHDT_Course_triggered()
           // Если строка содежит HDT
           // $GPHDT,153.89,T*03
           //    0      1   2
-          if(line.contains("HDT") and line.split('*').count()==2) // Ищем строку GGA и проверяем, что есть контрольная сумма
-          if(line.split(',').count()==3 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
+          if(line.contains("HDT") and line.split('*').count()==2) // Ищем строку HDT и проверяем, что есть контрольная сумма
+          if(line.split(',').count()==3)// and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
           {
               // Отбрасываем контрольную сумму
               line = line.split('*')[0];
@@ -1722,25 +1395,14 @@ void MainWindow::on_actionHDT_Course_triggered()
        // if(!distanceBLSR.isEmpty() || !distanceBLSF.isEmpty() || !distanceBLSA.isEmpty())
        if(!courseHDT.isEmpty())
        {
-       ui->customPlot->clearGraphs();
-
        // Вычисляем статистику
-       // Сумма значений
-       double summCourse=0;
-       foreach(double course, courseHDT)
-           summCourse+=course;
 
-       // Среднее арифметическое значение
-       double mid=summCourse/courseHDT.count();
+       double mid=0; // Среднее арифметическое значение
+       double cep=0; // СКО
+
+       func::statMID_CEP(courseHDT,cep,mid);
+
        ui->textBrowser->append("Mid: "+QString::number(mid));
-
-       // СКО
-       double cep=0;
-       foreach (double course, courseHDT) {
-           cep+=(course-mid)*(course-mid);
-       }
-       cep=cep/courseHDT.count();
-       cep=sqrt(cep);
        ui->textBrowser->append("CEP: "+QString::number(cep));
 
 
@@ -1757,46 +1419,245 @@ void MainWindow::on_actionHDT_Course_triggered()
        xMid.append(i);
 
        // Рисуем графики
-       // Distance 3D/...
-       // create graph and assign data to it:
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(0)->setData(timeLine, courseHDT);
-       // give the axes some labels:
-       ui->customPlot->graph(0)->setPen(QPen(Qt::red));
-       ui->customPlot->xAxis->setLabel("Time");
-       ui->customPlot->yAxis->setLabel("m");
-       ui->customPlot->yAxis->setScaleType(QCPAxis::stLinear);
-       ui->customPlot->graph(0)->setLineStyle(QCPGraph::lsNone);
-       ui->customPlot->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(0)->setName("3D/... Course");
+       ui->customPlot->clearGraphs();
+       // 3D...
+       func::drawGraph(ui->customPlot,timeLine,courseHDT,"Time","Value","3D/... Course");
+       // Среднее
+       func::drawGraph(ui->customPlot,xMid,xMid,"Time","Value","RTK Middle");
+       }
+       // Если массивы векторов пустые то сообщаем, что нет BLS данных
+       else {
+           ui->textBrowser->append("No HDT Data");
+       }
 
-       // Distance Среднее
-       ui->customPlot->addGraph();
-       ui->customPlot->graph(1)->setData(xMid, yMid);
-       // give the axes some labels:
-       ui->customPlot->graph(1)->setPen(QPen(Qt::black));
-       ui->customPlot->graph(1)->setLineStyle(QCPGraph::lsLine);
-       ui->customPlot->graph(1)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-       ui->customPlot->graph(1)->setName("RTK Middle");
+    }
+    }
+}
+//------------------------------------------------------------------------------------------------------------
+// BLS - разница между двумя значениями курса
+void MainWindow::on_actionBLS_Course_Difference_triggered()
+{
+    // Если fileName пустой - открыть Диалог.
+    if(fileName.isEmpty())
+    fileName = QFileDialog::getOpenFileName(this, tr("Open File..."), QString(), tr("NMEA LOG-Files (*.nme *.log);;All Files (*)"));
+
+    // Если имя не пустое то загружаем содержимое
+    if (!fileName.isEmpty())
+    {
+    // Очищаем Текст
+    ui->textBrowser->setText("");
+    //Тест вывод имени файла
+    ui->textBrowser->setText("File Name: "+fileName);
+
+    // Связываем переменную с физическим файлом
+    QFile inputFile(fileName);
+    // Если все ОК то открываем файл
+    if (inputFile.open(QIODevice::ReadOnly))
+    {
+       QTextStream in(&inputFile);
+
+       // Массив Расстояний и время(номер предложения)
+       // QVector<double> distanceBLSA, timeLineA, distanceBLSR, timeLineR, distanceBLSF, timeLineF;
+
+       // Массив Азимутов и время(номер предложения)
+       QVector<double> courseBLSA, timeLineA, courseBLSR, timeLineR, courseBLSF, timeLineF;
+
+       // Счетчик.
+       int i=0;
+
+       // Начальный курс
+       double cource0=0.;
+
+       // Пока не достигнем конца файла читаем строчки
+       while (!in.atEnd()) {
+          // Считываем строку
+          QString line = in.readLine();
+
+          // Если строка содежит BLS
+          // $PNVGBLS,-0.898,0.438,0.020,0.999,154.01,1.14,R*09
+          //    0        1     2     3     4      5    6   7
+          if(line.contains("BLS")) //Ищем строку BLS
+          if(line.split('*').count()==2) // проверяем, что есть контрольная сумма
+          if(line.split(',').count()==8)// and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
+          {
+              // Отбрасываем контрольную сумму
+              line = line.split('*')[0];
+
+              // Разбиваем строку по запятой
+              QStringList nmea = line.split(',');
+
+              // Тип решения
+              QString type = nmea[7];
+
+              // Курс
+              double course = QString(nmea[5]).toDouble();
+              // - переводим в 0-180 для удаления обрывов 0->360 и 360->0
+              //if(course>180)
+              //      course=360-course;
+
+              if(i>0)
+              {
+              // Модуль разницы. При переходах 0-360 будут большие значения! Подумать.
+              double diff = sqrt((cource0-course)*(cource0-course));
+
+              // Разбиваем данные по типу решения
+              // Если тип решения RTK Fix
+              if(type=="R")
+              {
+               //   distanceBSSR.append(QString(nmea[4]).toDouble());
+                  courseBLSR.append(diff);
+                  timeLineR.append(i);
+              }
+              // RTK Float
+              else if (type=="F") {
+                  //   distanceBSSR.append(QString(nmea[4]).toDouble());
+                  courseBLSF.append(diff);
+                  timeLineF.append(i);
+              }
+              else
+              // Остальные - 3D/3D Diff/DR/ n/a ...
+              {
+                  //   distanceBLSR.append(QString(nmea[4]).toDouble());
+                  courseBLSA.append(diff);
+                  timeLineA.append(i);
+              }
+              }// END IF i>0
+              cource0 = course;
+              // Счетчик
+              i++;
+
+             }// if BLS
+
+       }
+
+       inputFile.close();
+
+       // Если в массиве есть данные
+       // if(!distanceBLSR.isEmpty() || !distanceBLSF.isEmpty() || !distanceBLSA.isEmpty())
+       if(!courseBLSR.isEmpty() || !courseBLSF.isEmpty() || !courseBLSA.isEmpty())
+       {
+       // Вычисляем статистику
+
+       double mid=0; // Среднее арифметическое значение
+       double cep=0; // СКО
+
+       func::statMID_CEP(courseBLSR,cep,mid); // Вычисляем среднее и СКО
+       ui->textBrowser->append("Mid: "+QString::number(mid));
+       ui->textBrowser->append("CEP: "+QString::number(cep));// СКО
 
 
-       // Подгоняем размер. Вероятно нужно оставить одну строку. Проверить!
-       ui->customPlot->graph(1)->rescaleAxes();
+       // Выводим статистику
+       double Total=0, Fix=0, Float=0;
+       Fix = courseBLSR.count(); // Количество значений RTK
+       Float = courseBLSF.count(); // Количество значений Float
+       Total = Fix + Float + courseBLSA.count(); // Всего
+       // Общее количество точек
+       ui->textBrowser->append("Total points: "+QString::number(Total));
+       // Fix решений
+       ui->textBrowser->append("Fix points: "+QString::number(Fix/Total*100)+"% ("+QString::number(Fix)+")");
+       // Float решений
+       ui->textBrowser->append("Float points: "+QString::number(Float/Total*100)+"% ("+QString::number(Float)+")");
+       // Невалидных решений
+       //ui->textBrowser->append("Not Valid points: "+QString::number(notValid));
 
-       // Note: we could have also just called customPlot->rescaleAxes(); instead
-       // Allow user to drag axis ranges with mouse, zoom with mouse wheel and select graphs by clicking:
-       ui->customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
+       // Создаем вектор для средней линии
+       QVector<double> xMid, yMid;
+       yMid.append(mid);
+       yMid.append(mid);
+       xMid.append(0);
+       xMid.append(i);
 
-       // Значения времени
-       //ui->customPlot->xAxis->setAutoTickLabels(false);
-       //ui->customPlot->xAxis->setTickVectorLabels(timeLables);
-
-       ui->customPlot->replot();
+       // Рисуем графики
+       ui->customPlot->clearGraphs();
+       // 3D...
+       func::drawGraph(ui->customPlot,timeLineA,courseBLSA,"Time","Value","3D/... Course");
+       // Fix
+       func::drawGraph(ui->customPlot,timeLineR,courseBLSR,"Time","Value","RTK Course");
+       // Float
+       func::drawGraph(ui->customPlot,timeLineF,courseBLSF,"Time","Value","Float Course");
+       // Длина базовой линии
+       func::drawGraph(ui->customPlot,xMid,yMid,"Time","Value","RTK Middle");
        }
        // Если массивы векторов пустые то сообщаем, что нет BLS данных
        else {
            ui->textBrowser->append("No BLS Data");
        }
+
+    }
+    }
+}
+
+//  --------------------------------------------------------------------------------------
+// Подгоняем размер
+void MainWindow::on_actionScale_XY_triggered()
+{
+    ui->customPlot->rescaleAxes();
+    ui->customPlot->replot();
+}
+
+//  --------------------------------------------------------------------------------------
+// Ищем ошибки
+void MainWindow::on_actionFind_Errors_triggered()
+{
+    // Если fileName пустой - открыть Диалог.
+    if(fileName.isEmpty())
+    fileName = QFileDialog::getOpenFileName(this, tr("Open File..."), QString(), tr("NMEA LOG-Files (*.nme *.log);;All Files (*)"));
+
+    // Если имя не пустое то загружаем содержимое
+    if (!fileName.isEmpty())
+    {
+    // Очищаем Текст
+    ui->textBrowser->setText("");
+    //Тест вывод имени файла
+    ui->textBrowser->setText("File Name: "+fileName);
+
+    // Связываем переменную с физическим файлом
+    QFile inputFile(fileName);
+    // Если все ОК то открываем файл
+    if (inputFile.open(QIODevice::ReadOnly))
+    {
+       QTextStream in(&inputFile);
+
+       // Счетчики Общее кол-во строк, нет КС, КС не соответсвует строке, кол-во символов в КС не 2,
+       // Не соотвт. кол-ва полей
+       int i=0, noCRC=0, badCRC=0, badCountCRC=0, ggaFieldError=0, rmcFieldError=0;
+
+       // Пока не достигнем конца файла читаем строчки
+       while (!in.atEnd()) {
+          // Считываем строку
+          QString line = in.readLine();
+
+          // Нет контрольной суммы
+          if(!line.contains("*"))
+              noCRC++;
+          // Контрольная сумма не равна 2-м символам
+          else if(line.split('*')[1].count()!=2)
+              badCountCRC++;
+          // Не совпадает контрольная сумма
+          else if(line.split('*')[1]!=func::CRC(line))
+              badCRC++;
+
+          // Больше одного $
+
+          // Не совпадает количество полей
+          if(line.contains("GGA") and line.split(',').count()!=15)
+              ggaFieldError++;
+
+          // Не совпадает количество полей
+          if(line.contains("RMC") and line.split(',').count()!=13)
+              rmcFieldError++;
+
+       i++;
+       }
+
+    ui->textBrowser->append("Total Lines: "+QString::number(i));
+
+    ui->textBrowser->append("No CRC: "+QString::number(noCRC));
+    ui->textBrowser->append("Bad CRC: "+QString::number(badCRC));
+    ui->textBrowser->append("Bad Count CRC (Not 2 Digits): "+QString::number(badCountCRC));
+
+    ui->textBrowser->append("GGA Fields (Not 15): "+QString::number(ggaFieldError));
+    ui->textBrowser->append("RMC Fields (Not 13): "+QString::number(rmcFieldError)); // 5707 - добавлен признак S (евро). Нужна коррекция
 
     }
     }
