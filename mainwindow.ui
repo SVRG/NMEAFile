@@ -130,6 +130,7 @@
      <string>File</string>
     </property>
     <addaction name="actionOpen_File"/>
+    <addaction name="actionOpen_File_2"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -145,6 +146,10 @@
     <addaction name="actionNAV_Param"/>
     <addaction name="actionErrors"/>
     <addaction name="actionGGA_Diff_Age"/>
+    <addaction name="actionGGA_Position_1_2"/>
+    <addaction name="actionGGA_Position_Difference_12"/>
+    <addaction name="actionGGA_Time_Check"/>
+    <addaction name="actionGGA_Altitude"/>
     <addaction name="separator"/>
     <addaction name="actionRMC"/>
     <addaction name="actionBSS_Distance"/>
@@ -257,6 +262,31 @@
   <action name="actionFind_Errors">
    <property name="text">
     <string>Find Errors</string>
+   </property>
+  </action>
+  <action name="actionOpen_File_2">
+   <property name="text">
+    <string>Open File 2</string>
+   </property>
+  </action>
+  <action name="actionGGA_Position_1_2">
+   <property name="text">
+    <string>GGA Position 1 2</string>
+   </property>
+  </action>
+  <action name="actionGGA_Time_Check">
+   <property name="text">
+    <string>GGA Time Check</string>
+   </property>
+  </action>
+  <action name="actionGGA_Altitude">
+   <property name="text">
+    <string>GGA Altitude</string>
+   </property>
+  </action>
+  <action name="actionGGA_Position_Difference_12">
+   <property name="text">
+    <string>GGA Position Difference 1/2</string>
    </property>
   </action>
  </widget>
