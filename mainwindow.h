@@ -52,6 +52,16 @@ private slots:
 
     void on_actionFind_Errors_triggered();
 
+    void on_actionOpen_File_2_triggered();
+    
+    void on_actionGGA_Position_1_2_triggered();
+
+    void on_actionGGA_Time_Check_triggered();
+
+    void on_actionGGA_Altitude_triggered();
+
+    void on_actionGGA_Position_Difference_12_triggered();
+
 private:
     Ui::MainWindow *ui;
 };
