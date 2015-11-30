@@ -87,6 +87,24 @@ void func::drawGraph(QCustomPlot *customPlot, QVector<double> &xVal, QVector<dou
     case 5:
       pen.setColor(Qt::darkBlue);
       break;
+    case 6:
+      pen.setColor(Qt::yellow);
+      break;
+    case 7:
+      pen.setColor(Qt::cyan);
+      break;
+    case 8:
+      pen.setColor(Qt::magenta);
+      break;
+    case 9:
+      pen.setColor(Qt::darkYellow);
+      break;
+    case 10:
+      pen.setColor(Qt::darkCyan);
+      break;
+    case 11:
+      pen.setColor(Qt::darkMagenta);
+      break;
     default:
       pen.setColor(Qt::black);
       break;
@@ -590,7 +608,7 @@ void func::GGA_XY_0_Vectors(QString fileName, QVector<double> *X1, QVector<doubl
               // Разбиваем данные по типу решения
               func::GGA_to_3D_Fix_Float(nmea,X,Y,X1,Y1,X4,Y4,X5,Y5);
 
-              // Счетчик для валидных решений
+              // Счетчик валидных решений
               i++;
 
             }
@@ -604,13 +622,14 @@ void func::GGA_XY_0_Vectors(QString fileName, QVector<double> *X1, QVector<doubl
 bool func::GGA_Check(QString GGA_String)
 {
     if(GGA_String.contains("GGA")) // Ищем строку GGA
-    if(GGA_String.split('*').count()==2) // Проверяем, что есть контрольная сумма
-    if(GGA_String.split(',').count()==15 and (GGA_String.split('*')[1]==func::CRC(GGA_String))) // Проверка на количество полей, Проверка контрольной суммы
+//    if(GGA_String.split('*').count()==2) // Проверяем, что есть контрольная сумма
+    if(GGA_String.split(',').count()==15)// and (GGA_String.split('*')[1]==func::CRC(GGA_String))) // Проверка на количество полей, Проверка контрольной суммы
         return(true);
 return(false);
 }
 //----------------------------------------------------------------------------------------------------------------
 // GGA - темп. Проверяем темп по файлу. Пока не корректно работает! Переделать.
+// Предполагается использовать при поиске ближайшего времени
 int func::GGA_Temp(QTextStream *in)
 {
 int i=0, notValid=0;
@@ -743,21 +762,23 @@ void func::GGA_2Files_Diff(QString fileName1, QString fileName2, QVector<double>
 
     for(int i=0;i<Time1.count();i++)
     {
-        // Условия синхронизации
+        // Если первый файл раньше второго
+        if(Time1.value(i)<Time2.value(j)) // Если T1 раньше T2 - переводим время вперед
+        {
+            //i=i+(int)(Time2.value(j)-Time1.value(i)); // Прибавляем разницу по количеству секунд. По идее надо знать темп решения
+            continue;
+        }
 
         j=func::Nearest_Time(Time1.value(i),&Time2,j);
 
         if(j==-1) // Если ближайшее время не было найдено
             continue;
 
-        if(Time1.value(i)<Time2.value(j)) // Если T1 раньше T2 - переводим время вперед
-            continue;
-
         double x_diff = X1->value(i)-X2->value(j);
         double y_diff = Y1->value(i)-Y2->value(j);
 
-        Y.append(sqrt(x_diff*x_diff+y_diff*y_diff));
         X.append(Time1[i]);
+        Y.append(sqrt(x_diff*x_diff+y_diff*y_diff));
     }
 X1->clear();
 Y1->clear();
@@ -766,18 +787,80 @@ X1->append(X);
 Y1->append(Y);
 }
 //----------------------------------------------------------------------------------------------------------------
-// Time - найти ближайшее время (пока по ближайшим 50)
+// Time - найти ближайшее время. Вынести глубину поиска в параметр?
 int func::Nearest_Time(double time, QVector<double> *TimeVector, int Start)
 {
-    int End = Start+50;
+    int search_depth = 5000; // Глубина поиска
+    int count = TimeVector->count(); // Количество
+    bool forw=true, back=true; // Флаги вперед/назад
 
-    if(End >= (TimeVector->count()-Start)) // Если конец за пределами массива
-        End = TimeVector->count()-1;
-
-    for(int i=Start;i<End;i++)
+    for(int i=0;i<search_depth;i++)
     {
-        if(time==TimeVector->value(i))
-            return(i);
+        // Поиск вперед
+        if(forw) // Если поднят флаг, продолжаем поиск
+        {
+            if(Start+i<=count)
+             {
+                double time_f=TimeVector->value(Start+i);
+
+                if(time==time_f) // Если нашли, то возвращаем значение
+                      return(Start+i);
+
+                 if(time<time_f) // Если прошли мимо то дальше не имеет смысла искать
+                         forw=false;
+             }
+             else
+                 forw=false;
+         }//--------------
+
+         // Поиск назад
+         if(back) // Если поднят флаг, продолжаем поиск
+         {
+           if(Start-i>=0)
+             {
+               double time_b=TimeVector->value(Start-i);
+
+               if(time==time_b) // Если нашли, то возвращаем значение
+                      return(Start-i);
+
+                 if(time>time_b) // Если прошли мимо то дальше не имеет смысла искать
+                     back=false;
+             }
+             else
+                    back=false;
+         }//-------------
+
+         if(!forw and !back) // Если оба флага опущены завершаем поиск
+            return(-1);
+
     }
 return(-1);
+}
+//----------------------------------------------------------------------------------------------------------------
+// GGA - разности по вектору ошибок между текущей точкой и через 900 секунд
+void func::GGA_2Files_Diff_900(QString fileName1, QString fileName2, QVector<double> *X1, QVector<double> *Y1, QVector<double> *X2, QVector<double> *Y2)
+{
+    func::GGA_2Files_Diff(fileName1,fileName2,X1,Y1,X2,Y2);
+
+    QVector<double> X, Y;
+    int Second_Point=0;
+    int Count = X1->count();
+
+    for(int i=0;i<=Count;i++)
+    {
+        Second_Point=func::Nearest_Time(X1->value(i)+900.,X1,i+900); // Надо еще учитывать темп решения
+
+        if(Second_Point==-1)
+            continue;
+
+        double diff=sqrt((Y1->value(Second_Point)-Y1->value(i))*(Y1->value(Second_Point)-Y1->value(i)));
+
+        X.append(X1->value(Second_Point));
+        Y.append(diff);
+    }
+X1->clear();
+Y1->clear();
+
+X1->append(X);
+Y1->append(Y);
 }

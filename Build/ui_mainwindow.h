@@ -57,6 +57,7 @@ public:
     QAction *actionGGA_Time_Check;
     QAction *actionGGA_Altitude;
     QAction *actionGGA_Position_Difference_12;
+    QAction *actionGGA_900_sec_Diff_1_2;
     QWidget *centralWidget;
     QHBoxLayout *horizontalLayout;
     QTabWidget *tabWidget;
@@ -128,6 +129,8 @@ public:
         actionGGA_Altitude->setObjectName(QStringLiteral("actionGGA_Altitude"));
         actionGGA_Position_Difference_12 = new QAction(MainWindow);
         actionGGA_Position_Difference_12->setObjectName(QStringLiteral("actionGGA_Position_Difference_12"));
+        actionGGA_900_sec_Diff_1_2 = new QAction(MainWindow);
+        actionGGA_900_sec_Diff_1_2->setObjectName(QStringLiteral("actionGGA_900_sec_Diff_1_2"));
         centralWidget = new QWidget(MainWindow);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         centralWidget->setMinimumSize(QSize(0, 469));
@@ -236,10 +239,12 @@ public:
         menuView->addAction(actionNAV_Param);
         menuView->addAction(actionErrors);
         menuView->addAction(actionGGA_Diff_Age);
-        menuView->addAction(actionGGA_Position_1_2);
-        menuView->addAction(actionGGA_Position_Difference_12);
         menuView->addAction(actionGGA_Time_Check);
         menuView->addAction(actionGGA_Altitude);
+        menuView->addSeparator();
+        menuView->addAction(actionGGA_Position_1_2);
+        menuView->addAction(actionGGA_Position_Difference_12);
+        menuView->addAction(actionGGA_900_sec_Diff_1_2);
         menuView->addSeparator();
         menuView->addAction(actionRMC);
         menuView->addAction(actionBSS_Distance);
@@ -283,6 +288,7 @@ public:
         actionGGA_Time_Check->setText(QApplication::translate("MainWindow", "GGA Time Check", 0));
         actionGGA_Altitude->setText(QApplication::translate("MainWindow", "GGA Altitude", 0));
         actionGGA_Position_Difference_12->setText(QApplication::translate("MainWindow", "GGA Position Difference 1/2", 0));
+        actionGGA_900_sec_Diff_1_2->setText(QApplication::translate("MainWindow", "GGA 900 sec Diff 1/2", 0));
         tabWidget->setTabText(tabWidget->indexOf(tab_Graph), QApplication::translate("MainWindow", "Graph", 0));
         groupBox->setTitle(QApplication::translate("MainWindow", "Options", 0));
         pushButton->setText(QApplication::translate("MainWindow", "Find", 0));

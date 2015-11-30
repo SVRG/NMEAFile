@@ -18,7 +18,8 @@ Roadmap
 
 
 // Имя файла, глобальная переменная
-QString fileName="", fileName2="", graphName="";
+QString fileName="", graphName="";
+QStringList fileNames;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -66,8 +67,8 @@ void MainWindow::on_actionOpen_File_triggered()
         else if(graphName=="Find_Errors")
           MainWindow::on_actionFind_Errors_triggered();
 
-        else
-          MainWindow::on_actionGGA_Position_triggered();
+        //else
+        //  MainWindow::on_actionGGA_Position_triggered();
 
     }
     else
@@ -1584,8 +1585,10 @@ void MainWindow::on_actionFind_Errors_triggered()
 // Открыть второй файл для сравнения с первым
 void MainWindow::on_actionOpen_File_2_triggered()
 {
-    fileName2 = QFileDialog::getOpenFileName(this, tr("Open File..."), QString(), tr("NMEA LOG-Files (*.nme *.log);;All Files (*)"));
-
+//    fileName2 = QFileDialog::getOpenFileName(this, tr("Open File..."), QString(), tr("NMEA LOG-Files (*.nme *.log);;All Files (*)"));
+    fileNames = QFileDialog::getOpenFileNames(this, tr("Open File..."), QString(), tr("NMEA LOG-Files (*.nme *.log);;All Files (*)"));
+//    fileName = fileNames[0];
+//    fileName2 = fileNames[1];
 }
 
 //  --------------------------------------------------------------------------------------
@@ -1596,7 +1599,7 @@ void MainWindow::on_actionGGA_Position_1_2_triggered()
     if(fileName.isEmpty())
         MainWindow::on_actionOpen_File_triggered();
     // Если fileName пустой - открыть Диалог.
-    if(fileName2.isEmpty())
+    if(fileNames.count()==0)
         MainWindow::on_actionOpen_File_2_triggered();
 
     // Массивы координат 3D/Diff - X1,Y1; Fix - X4,Y4; Float - X5,Y5; bf_lf_Rb_Rl - начальные координаты и коэффициенты
@@ -1613,18 +1616,24 @@ void MainWindow::on_actionGGA_Position_1_2_triggered()
     ui->customPlot->clearGraphs();
     func::drawGraph3D_Fix_Float(ui->customPlot,X1,Y1,X4,Y4,X5,Y5);
 
-    // Очищаем векторы
-    X1.clear(); Y1.clear(); X4.clear(); Y4.clear(); X5.clear(); Y5.clear();
+    int filesCount = fileNames.count();
 
-    // Второй файл--------------------------------------------------
-    func::GGA_XY_0_Vectors(fileName2,&X1,&Y1,&X4,&Y4,&X5,&Y5,bf_lf_Rb_Rl[0],bf_lf_Rb_Rl[1],bf_lf_Rb_Rl[2],bf_lf_Rb_Rl[3]);
+    for(int i=0;i<filesCount;i++)
+    {
+        // Очищаем векторы
+        X1.clear(); Y1.clear(); X4.clear(); Y4.clear(); X5.clear(); Y5.clear();
 
-    // Выводим статистику
-    ui->textBrowser->append("File 2 Stat");
-    func::Stat3D_Fix_Float(ui->textBrowser,X1,X4,X5);
+        // Второй файл--------------------------------------------------
+        func::GGA_XY_0_Vectors(fileNames[i],&X1,&Y1,&X4,&Y4,&X5,&Y5,bf_lf_Rb_Rl[0],bf_lf_Rb_Rl[1],bf_lf_Rb_Rl[2],bf_lf_Rb_Rl[3]);
 
-    // Рисуем график файла 2
-    func::drawGraph3D_Fix_Float(ui->customPlot,X1,Y1,X4,Y4,X5,Y5);
+        // Выводим статистику
+        ui->textBrowser->append("File "+ QString::number(i+2) + " Stat");
+        ui->textBrowser->append("File: "+ fileNames[i]);
+        func::Stat3D_Fix_Float(ui->textBrowser,X1,X4,X5);
+
+        // Рисуем график файла 2
+        func::drawGraph3D_Fix_Float(ui->customPlot,X1,Y1,X4,Y4,X5,Y5);
+    }
 }
 
 //  --------------------------------------------------------------------------------------
@@ -1681,18 +1690,51 @@ void MainWindow::on_actionGGA_Position_Difference_12_triggered()
     if(fileName.isEmpty())
         MainWindow::on_actionOpen_File_triggered();
     // Если fileName пустой - открыть Диалог.
-    if(fileName2.isEmpty())
+    if(fileNames.count()==0)
         MainWindow::on_actionOpen_File_2_triggered();
+
+    ui->customPlot->clearGraphs();
+    // Массивы координат
+    QVector<double> X1, Y1, X2, Y2;
+
+    int filesCount = fileNames.count(); // Количество файлов для сравнения
+
+    // Выполняем вычисления по всем файлам
+    for(int i=0;i<filesCount;i++)
+    {
+        func::GGA_2Files_Diff(fileName,fileNames[i],&X1,&Y1,&X2,&Y2);
+
+        func::drawGraph(ui->customPlot,X1,Y1,"Time","Diff, m",fileNames[i]);
+
+        X1.clear(); Y1.clear(); X2.clear(); Y2.clear();
+    }
+}
+//---------------------------------------------------------------------------------------------
+// GGA Разница по координатам в плоскости
+void MainWindow::on_actionGGA_900_sec_Diff_1_2_triggered()
+{
+    // Если fileName пустой - открыть Диалог.
+    if(fileName.isEmpty())
+        MainWindow::on_actionOpen_File_triggered();
+    // Если fileName пустой - открыть Диалог.
+    if(fileNames.count()==0)
+        MainWindow::on_actionOpen_File_2_triggered();
+
+    // Очищаем и рисуем график файла 1
+    ui->customPlot->clearGraphs();
 
     // Массивы координат 3D/Diff - X1,Y1; Fix - X4,Y4; Float - X5,Y5;
     QVector<double> X1, Y1, X2, Y2;
 
-    // Первый файл--------------------------------------------------
-    func::GGA_2Files_Diff(fileName,fileName2,&X1,&Y1,&X2,&Y2);
+    int filesCount = fileNames.count(); // Количество файлов для сравнения
 
-    // Очищаем и рисуем график файла 1
-    ui->customPlot->clearGraphs();
-    func::drawGraph(ui->customPlot,X1,Y1,"Time","Diff, m","XY Difference");
+    // Выполняем вычисления по всем файлам
+    for(int i=0;i<filesCount;i++)
+    {
+        func::GGA_2Files_Diff_900(fileName,fileNames[i],&X1,&Y1,&X2,&Y2);
 
-    ui->customPlot->replot();
+        func::drawGraph(ui->customPlot,X1,Y1,"Time","Diff, m",fileNames[i]);
+
+        X1.clear(); Y1.clear(); X2.clear(); Y2.clear();
+    }
 }

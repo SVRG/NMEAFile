@@ -146,10 +146,12 @@
     <addaction name="actionNAV_Param"/>
     <addaction name="actionErrors"/>
     <addaction name="actionGGA_Diff_Age"/>
-    <addaction name="actionGGA_Position_1_2"/>
-    <addaction name="actionGGA_Position_Difference_12"/>
     <addaction name="actionGGA_Time_Check"/>
     <addaction name="actionGGA_Altitude"/>
+    <addaction name="separator"/>
+    <addaction name="actionGGA_Position_1_2"/>
+    <addaction name="actionGGA_Position_Difference_12"/>
+    <addaction name="actionGGA_900_sec_Diff_1_2"/>
     <addaction name="separator"/>
     <addaction name="actionRMC"/>
     <addaction name="actionBSS_Distance"/>
@@ -287,6 +289,11 @@
   <action name="actionGGA_Position_Difference_12">
    <property name="text">
     <string>GGA Position Difference 1/2</string>
+   </property>
+  </action>
+  <action name="actionGGA_900_sec_Diff_1_2">
+   <property name="text">
+    <string>GGA 900 sec Diff 1/2</string>
    </property>
   </action>
  </widget>

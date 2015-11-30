@@ -29,6 +29,7 @@ public:
     static int GGA_Temp(QTextStream *in);
     static void GGA_XYTime_0_Vectors(QString fileName, QVector<double> *X1, QVector<double> *Y1, QVector<double> *Time, QVector<double> *bf_lf_Rb_Rl);
     static void GGA_2Files_Diff(QString fileName1, QString fileName2, QVector<double> *X1, QVector<double> *Y1, QVector<double> *X2, QVector<double> *Y2);
+    static void GGA_2Files_Diff_900(QString fileName1, QString fileName2, QVector<double> *X1, QVector<double> *Y1, QVector<double> *X2, QVector<double> *Y2);
     static int Nearest_Time(double time, QVector<double> *TimeVector, int Start);
 
 };
