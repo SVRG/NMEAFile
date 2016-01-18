@@ -16,8 +16,9 @@ QString func::CRC(QString nmea)
 
     if(nmea.contains("*"))
     {
-        while (str[i]!='*')
-            sum=sum^str[i++]; //рассчет КС
+
+    while (str[i]!='*')
+        sum=sum^str[i++]; //рассчет КС
 
     QString s = "";
     s = QString::number(sum,16); //перевод в шестнадцатиричный формат
@@ -110,7 +111,7 @@ void func::drawGraph(QCustomPlot *customPlot, QVector<double> &xVal, QVector<dou
       break;
     }
 
-    // Указваем данные
+    // Устанавливаем данные для графика
     customPlot->graph(ID)->setData(xVal, yVal);
 
     // Указываем цвет
@@ -121,12 +122,10 @@ void func::drawGraph(QCustomPlot *customPlot, QVector<double> &xVal, QVector<dou
     customPlot->yAxis->setLabel(yLable);
 
     // Доп настройки
-    customPlot->yAxis->setScaleType(QCPAxis::stLinear);
-    customPlot->graph(ID)->setLineStyle(QCPGraph::lsNone);
-    customPlot->graph(ID)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-    customPlot->graph(ID)->setName(graphName);
-
-    // Доп настройки
+    customPlot->yAxis->setScaleType(QCPAxis::stLinear); // Масштабирование
+    customPlot->graph(ID)->setLineStyle(QCPGraph::lsNone); // Тип линии - отсутствует
+    customPlot->graph(ID)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4)); // Тип точек - кружки, радиус 4
+    customPlot->graph(ID)->setName(graphName); // Название графика
 
     // Включаем авто-разбивку по основным
     customPlot->xAxis->setAutoTickStep(true);
@@ -140,24 +139,24 @@ void func::drawGraph(QCustomPlot *customPlot, QVector<double> &xVal, QVector<dou
     customPlot->xAxis->setAutoSubTicks(false);
     customPlot->yAxis->setAutoSubTicks(false);
 
-    // Устанавливаем разбивку по промежуточным 4 (по 5 делений)
+    // Устанавливаем разбивку по промежуточным 4 (5 секций |_i_i_i_i_|)
     customPlot->xAxis->setSubTickCount(4);
     customPlot->yAxis->setSubTickCount(4);
 
-    customPlot->rescaleAxes();
+    customPlot->rescaleAxes(); // Подгоняем размер
 
-    customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
+    customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables); // ?
 
-    customPlot->replot();
+    customPlot->replot(); // Перерисовка графиков
 }
 //----------------------------------------------------------------------------------------------------------
-// Прорисовка графика Средней линии. Вспомогательная функция.
-void func::drawMidGraph(QCustomPlot *customPlot, double yMidVal, int xCount)
+// Прорисовка графика Средней линии. Вспомогательная функция. Переделать - на интервал
+void func::drawMidGraph(QCustomPlot *customPlot, double yMidVal, double xMin, double xMax)
 {
     // Добавляем график
     customPlot->addGraph();
 
-    // Идентифицируем график
+    // Идентифицируем ID графика
     int ID = customPlot->graphCount()-1;
 
     QPen pen; // Тип маркера
@@ -165,8 +164,8 @@ void func::drawMidGraph(QCustomPlot *customPlot, double yMidVal, int xCount)
     pen.setColor(Qt::black);
 
     QVector<double> xVal, yVal;
-    xVal.append(0.);
-    xVal.append((double)xCount);
+    xVal.append(xMin);
+    xVal.append(xMax);
 
     yVal.append(yMidVal);
     yVal.append(yMidVal);
@@ -212,83 +211,83 @@ void func::GGA_XY_Vectors(QString fileName, QVector<double> *X1, QVector<double>
     // Если имя не пустое то загружаем содержимое
     if (!fileName.isEmpty())
     {
-    // Связываем переменную с физическим файлом
-    QFile inputFile(fileName);
-    // Если все ОК то открываем файл
-    if (inputFile.open(QIODevice::ReadOnly))
-    {
-       QTextStream in(&inputFile);
+        // Связываем переменную с физическим файлом
+        QFile inputFile(fileName);
+        // Если все ОК то открываем файл
+        if (inputFile.open(QIODevice::ReadOnly))
+        {
+               QTextStream in(&inputFile);
 
-       // Счетчик невалидных решений
-       int notValid=0;
+               // Счетчик невалидных решений
+               int notValid=0;
 
-       //Координаты начальной точки, коэффициенты
-       double b_fix=0., l_fix=0., R_b = 0., R_l = 0.;
+               //Координаты начальной точки, коэффициенты
+               double b_fix=0., l_fix=0., R_b = 0., R_l = 0.;
 
-       // Счетчик времени (решений)
-       int i=0;
+               // Счетчик времени (решений)
+               int i=0;
 
-       // Пока не достигнем конца файла читаем строчки
-       while (!in.atEnd()) {
-          // Считываем строку
-          QString line = in.readLine();
+               // Пока не достигнем конца файла читаем строчки
+               while (!in.atEnd()) {
+                  // Считываем строку
+                  QString line = in.readLine();
 
-          // Если строка содежит GGA
-          // $GPGGA,113448.601,5452.3307572,N,08258.7870772,E,1,17,0.8,160.927,M,    ,M  ,0.6,  *6F
-          //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
-          if(func::GGA_Check(line)) // Ищем строку GGA
-          {
+                  // Если строка содежит GGA
+                  // $GPGGA,113448.601,5452.3307572,N,08258.7870772,E,1,17,0.8,160.927,M,    ,M  ,0.6,  *6F
+                  //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
+                  if(func::GGA_Check(line)) // Ищем строку GGA
+                  {
 
-              // Разбиваем строку по запятой
-              QStringList nmea = line.split(',');
+                      // Разбиваем строку по запятой
+                      QStringList nmea = line.split(',');
 
-              // Если данные не достоверны - пропускаем
-              if(nmea[6]=="0"){
-                  notValid++;
-                  continue;
-              }
+                      // Если данные не достоверны - пропускаем
+                      if(nmea[6]=="0"){
+                          notValid++;
+                          continue;
+                      }
 
-              // BLH->XYZ Строковые и числовые переменные
-              double B=0.,L=0.,H=0.;
+                      // BLH->XYZ Строковые и числовые переменные
+                      double B=0.,L=0.,H=0.;
 
-              func::GGA_BLH_Radians(line,B,L,H);
+                      func::GGA_BLH_Radians(line,B,L,H);
 
-              // Вариант трека по приращениям (Storegis)
-              // Начальная точка. Вычисляем коэффициенты один раз?
-              if(i==1) // Первое валидное решение
-              {
-                  func::GGA_R_b_R_l(line,R_b,R_l);
-                  b_fix=B; // Начальная широта
-                  l_fix=L; // Начальная долгота
+                      // Вариант трека по приращениям (Storegis)
+                      // Начальная точка. Вычисляем коэффициенты один раз?
+                      if(i==1) // Первое валидное решение
+                      {
+                          func::GGA_R_b_R_l(line,R_b,R_l);
+                          b_fix=B; // Начальная широта
+                          l_fix=L; // Начальная долгота
 
-                  // Передаем вектор начальных условий и Коэффициенты
-                  bf_lf_Rb_Rl->append(b_fix);
-                  bf_lf_Rb_Rl->append(l_fix);
-                  bf_lf_Rb_Rl->append(R_b);
-                  bf_lf_Rb_Rl->append(R_l);
-              }
+                          // Передаем вектор начальных условий и Коэффициенты
+                          bf_lf_Rb_Rl->append(b_fix);
+                          bf_lf_Rb_Rl->append(l_fix);
+                          bf_lf_Rb_Rl->append(R_b);
+                          bf_lf_Rb_Rl->append(R_l);
+                      }
 
-              // Вычисляем разницу между начальными и текущими координатами и умножаем на коэффициенты
-              if(i>0)
-              {
-              double X=0., Y=0.;
+                      // Вычисляем разницу между начальными и текущими координатами и умножаем на коэффициенты
+                      if(i>0)
+                      {
+                      double X=0., Y=0.;
 
-              // Вычисляем относительные координаты
-              func::GGA_BLH_to_XY_0(line, X, Y, b_fix, l_fix, R_b, R_l);
+                      // Вычисляем относительные координаты
+                      func::GGA_BLH_to_XY_0(line, X, Y, b_fix, l_fix, R_b, R_l);
 
-              // Разбиваем данные по типу решения
-              func::GGA_to_3D_Fix_Float(nmea,X,Y,X1,Y1,X4,Y4,X5,Y5);
+                      // Разбиваем данные по типу решения
+                      func::GGA_to_3D_Fix_Float(nmea,X,Y,X1,Y1,X4,Y4,X5,Y5);
 
-              } // if i>0
+                      } // if i>0
 
-              // Счетчик для валидных решений
-              i++;
+                      // Счетчик для валидных решений
+                      i++;
 
-            }
-       }
-       inputFile.close();
-}
-}
+                    }
+               }
+               inputFile.close();
+        }
+    }
 
 }
 //----------------------------------------------------------------------------------------------------------
@@ -413,22 +412,20 @@ void func::GGA_Altitude_Vectors(QString fileName, QVector<double> *X1, QVector<d
 }
 //----------------------------------------------------------------------------------------------------------------
 // Перевод Строки "Время" в секунды с начала дня (00:00)
-double func::TimeToSeconds(QString timeString)
+double func::TimeToSeconds(QString timeField)
 {
-    if(timeString.count()<6)
-        return(0.);
+    if(timeField.count()<6)
+        return(-1.);
 
-    QString Hours,Minutes,Seconds,Fractional; // Часы/Минуты/Секунды/Дробная часть
+    QString Hours="00",Minutes="00",Seconds="00",Fractional="00"; // Часы/Минуты/Секунды/Дробная часть секунды
 
-    Fractional=timeString.split('.')[1]; // Дробная часть
-    if(Fractional.count()<1)
-        Fractional="";
+    Fractional=timeField.split('.')[1]; // Дробная часть
 
-    timeString = timeString.split('.')[0]; // Часы минуты и целая часть секунд
+    timeField = timeField.split('.')[0]; // Часы минуты и целая часть секунд
 
-    Hours = timeString.left(2); // Часы
-    Minutes = timeString.mid(2,2); // Минуты
-    Seconds = timeString.right(2) + '.' + Fractional; // Секунды целая + дробная часть
+    Hours = timeField.left(2); // Часы
+    Minutes = timeField.mid(2,2); // Минуты
+    Seconds = timeField.right(2) + '.' + Fractional; // Секунды целая + дробная часть
 
     return(Hours.toDouble()*3600 + Minutes.toDouble()*60 + Seconds.toDouble());
 }
@@ -447,19 +444,22 @@ void func::drawGraph3D_Fix_Float(QCustomPlot *customPlot, QVector<double> X1, QV
 }
 //----------------------------------------------------------------------------------------------------------------
 // Выводим статистику 3D/Fix/Float
-void func::Stat3D_Fix_Float(QTextBrowser *textBrowser, QVector<double> X1, QVector<double> X4, QVector<double> X5)
+void func::Stat3D_Fix_Float(QTextBrowser *textBrowser, QVector<double> *X1, QVector<double> *X4, QVector<double> *X5)
 {
     // Выводим статистику
-    double Total=0, Fix=0, Float=0;
-    Fix = X4.count();
-    Float = X5.count();
-    Total = Fix + Float + X1.count();
+    double Total=0., Fix=0., Float=0., Other=0.;
+    Fix = (double)X4->count();
+    Float = (double)X5->count();
+    Other = (double)X1->count();
+    Total = Fix + Float + Other;
     // Общее количество точек
     textBrowser->append("Total points: "+QString::number(Total));
     // Fix решений
     textBrowser->append("Fix points: "+QString::number(Fix/Total*100)+"% ("+QString::number(Fix)+")");
     // Float решений
     textBrowser->append("Float points: "+QString::number(Float/Total*100)+"% ("+QString::number(Float)+")");
+    // Float решений
+    textBrowser->append("3D/Diff/... points: "+QString::number(Other/Total*100)+"% ("+QString::number(Other)+")");
     // Невалидныйх решений
     //ui->textBrowser->append("Not Valid points: "+QString::number(notValid));
 }
@@ -498,7 +498,7 @@ void func::BLH_to_XYZ(QString GGA_String, double &X, double &Y, double &Z)
     double B=0., L=0., H=0.;
     func::GGA_BLH_Radians(GGA_String,B,L,H);
 
-    //Вычисление XYZ. Значение N можно вычислить 1 раз?
+    //Вычисление XYZ. Уточнить: Значение N можно вычислить 1 раз?
     double N    = 6378137. / sqrt(1. - 0.00669437999 * sin(B) * sin(B));
     X = (N + H) * cos(L) * cos(B);
     Y = (N + H) * sin(L) * cos(B);
@@ -622,8 +622,8 @@ void func::GGA_XY_0_Vectors(QString fileName, QVector<double> *X1, QVector<doubl
 bool func::GGA_Check(QString GGA_String)
 {
     if(GGA_String.contains("GGA")) // Ищем строку GGA
-//    if(GGA_String.split('*').count()==2) // Проверяем, что есть контрольная сумма
-    if(GGA_String.split(',').count()==15)// and (GGA_String.split('*')[1]==func::CRC(GGA_String))) // Проверка на количество полей, Проверка контрольной суммы
+    if(GGA_String.split('*').count()==2) // Проверяем, что есть контрольная сумма
+    if(GGA_String.split(',').count()==15 and (GGA_String.split('*')[1]==func::CRC(GGA_String))) // Проверка на количество полей, Проверка контрольной суммы
         return(true);
 return(false);
 }
@@ -667,78 +667,78 @@ void func::GGA_XYTime_0_Vectors(QString fileName, QVector<double> *X1, QVector<d
 {
     // Если имя не пустое то загружаем содержимое
     if (!fileName.isEmpty())
-    {
-    // Связываем переменную с физическим файлом
-    QFile inputFile(fileName);
-    // Если все ОК то открываем файл
-    if (inputFile.open(QIODevice::ReadOnly))
-    {
-       QTextStream in(&inputFile);
+        {
+        // Связываем переменную с физическим файлом
+        QFile inputFile(fileName);
+        // Если все ОК то открываем файл
+        if (inputFile.open(QIODevice::ReadOnly)){
 
-       // Счетчик невалидных решений
-       int notValid=0;
+            QTextStream in(&inputFile);
 
-       // Счетчик времени (решений)
-       int i=0;
+            // Счетчик невалидных решений
+            int notValid=0;
 
-       // Пока не достигнем конца файла читаем строчки
-       while (!in.atEnd()) {
-          // Считываем строку
-          QString line = in.readLine();
+            // Счетчик времени (решений)
+            int i=0;
 
-          // Если строка содежит GGA
-          // $GPGGA,113448.601,5452.3307572,N,08258.7870772,E,1,17,0.8,160.927,M,    ,M  ,0.6,  *6F
-          //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
-          if(func::GGA_Check(line)) // Ищем строку GGA
-          {
+            // Пока не достигнем конца файла читаем строчки
+            while (!in.atEnd()) {
+                  // Считываем строку
+                  QString line = in.readLine();
 
-              // Разбиваем строку по запятой
-              QStringList nmea = line.split(',');
+                  // Если строка содежит GGA
+                  // $GPGGA,113448.601,5452.3307572,N,08258.7870772,E,1,17,0.8,160.927,M,    ,M  ,0.6,  *6F
+                  //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
+                  if(func::GGA_Check(line)) // Ищем строку GGA
+                  {
 
-              // Если данные не достоверны - пропускаем
-              if(nmea[6]=="0"){
-                  notValid++;
-                  continue;
-              }
+                      // Разбиваем строку по запятой
+                      QStringList nmea = line.split(',');
 
-              // Вариант трека по приращениям (Storegis)
-              // Начальная точка. Вычисляем коэффициенты один раз?
-              if(i==1 and bf_lf_Rb_Rl->count()<4) // Первое валидное решение
-              {
-                  // BLH->XYZ Строковые и числовые переменные
-                  double B=0.,L=0.,H=0., R_b=0, R_l=0;
+                      // Если данные не достоверны - пропускаем
+                      if(nmea[6]=="0"){
+                          notValid++;
+                          continue;
+                      }
 
-                  func::GGA_BLH_Radians(line,B,L,H);
+                      // Вариант трека по приращениям (Storegis)
+                      // Начальная точка. Вычисляем коэффициенты один раз?
+                      if(i==1 and bf_lf_Rb_Rl->count()<4) // Первое валидное решение
+                      {
+                          // BLH->XYZ Строковые и числовые переменные
+                          double B=0.,L=0.,H=0., R_b=0, R_l=0;
 
-                  func::GGA_R_b_R_l(line,R_b,R_l);
-                  double b_fix=B; // Начальная широта
-                  double l_fix=L; // Начальная долгота
+                          func::GGA_BLH_Radians(line,B,L,H);
 
-                  // Передаем вектор начальных условий и Коэффициенты
-                  bf_lf_Rb_Rl->append(b_fix);
-                  bf_lf_Rb_Rl->append(l_fix);
-                  bf_lf_Rb_Rl->append(R_b);
-                  bf_lf_Rb_Rl->append(R_l);
-              }
+                          func::GGA_R_b_R_l(line,R_b,R_l);
+                          double b_fix=B; // Начальная широта
+                          double l_fix=L; // Начальная долгота
+
+                          // Передаем вектор начальных условий и Коэффициенты
+                          bf_lf_Rb_Rl->append(b_fix);
+                          bf_lf_Rb_Rl->append(l_fix);
+                          bf_lf_Rb_Rl->append(R_b);
+                          bf_lf_Rb_Rl->append(R_l);
+                      }
 
 
-              double X=0., Y=0.;
+                      double X=0., Y=0.;
 
-              // Вычисляем относительные координаты
-              func::GGA_BLH_to_XY_0(line, X, Y, bf_lf_Rb_Rl->value(0), bf_lf_Rb_Rl->value(1), bf_lf_Rb_Rl->value(2), bf_lf_Rb_Rl->value(3));
+                      // Вычисляем относительные координаты
+                      func::GGA_BLH_to_XY_0(line, X, Y, bf_lf_Rb_Rl->value(0), bf_lf_Rb_Rl->value(1), bf_lf_Rb_Rl->value(2), bf_lf_Rb_Rl->value(3));
 
-              X1->append(X);
-              Y1->append(Y);
-              Time->append(func::TimeToSeconds(nmea[1]));
+                      X1->append(X);
+                      Y1->append(Y);
+                      Time->append(func::TimeToSeconds(nmea[1]));
 
-              // Счетчик для валидных решений
-              i++;
+                      // Счетчик для валидных решений
+                      i++;
 
-            }
-       }
-       inputFile.close();
-}
-}
+                    }
+               }
+               inputFile.close();
+        }
+    }
 }
 //----------------------------------------------------------------------------------------------------------------
 // GGA - разности по координатам
@@ -814,9 +814,9 @@ int func::Nearest_Time(double time, QVector<double> *TimeVector, int Start)
          }//--------------
 
          // Поиск назад
-         if(back) // Если поднят флаг, продолжаем поиск
+         if(back) // Если поднят флаг - Назад, продолжаем поиск
          {
-           if(Start-i>=0)
+           if(Start-i>=0) // Если не достигнуто начало
              {
                double time_b=TimeVector->value(Start-i);
 
@@ -832,7 +832,6 @@ int func::Nearest_Time(double time, QVector<double> *TimeVector, int Start)
 
          if(!forw and !back) // Если оба флага опущены завершаем поиск
             return(-1);
-
     }
 return(-1);
 }
@@ -845,10 +844,11 @@ void func::GGA_2Files_Diff_900(QString fileName1, QString fileName2, QVector<dou
     QVector<double> X, Y;
     int Second_Point=0;
     int Count = X1->count();
+    int tempPVT = 1; // Темп решения НЗ. Пока константа, но надо определять по файлу.
 
     for(int i=0;i<=Count;i++)
     {
-        Second_Point=func::Nearest_Time(X1->value(i)+900.,X1,i+900); // Надо еще учитывать темп решения
+        Second_Point=func::Nearest_Time(X1->value(i)+900.,X1,i+900*tempPVT); // Надо еще учитывать темп решения
 
         if(Second_Point==-1)
             continue;

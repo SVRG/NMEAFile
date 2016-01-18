@@ -58,6 +58,7 @@ public:
     QAction *actionGGA_Altitude;
     QAction *actionGGA_Position_Difference_12;
     QAction *actionGGA_900_sec_Diff_1_2;
+    QAction *actionCreate_CSV;
     QWidget *centralWidget;
     QHBoxLayout *horizontalLayout;
     QTabWidget *tabWidget;
@@ -131,6 +132,8 @@ public:
         actionGGA_Position_Difference_12->setObjectName(QStringLiteral("actionGGA_Position_Difference_12"));
         actionGGA_900_sec_Diff_1_2 = new QAction(MainWindow);
         actionGGA_900_sec_Diff_1_2->setObjectName(QStringLiteral("actionGGA_900_sec_Diff_1_2"));
+        actionCreate_CSV = new QAction(MainWindow);
+        actionCreate_CSV->setObjectName(QStringLiteral("actionCreate_CSV"));
         centralWidget = new QWidget(MainWindow);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         centralWidget->setMinimumSize(QSize(0, 469));
@@ -229,6 +232,7 @@ public:
         menuBar->addAction(menuView->menuAction());
         menuFile->addAction(actionOpen_File);
         menuFile->addAction(actionOpen_File_2);
+        menuFile->addAction(actionCreate_CSV);
         menuView->addAction(actionScale);
         menuView->addAction(actionScale_Y);
         menuView->addAction(actionScale_XY);
@@ -289,6 +293,7 @@ public:
         actionGGA_Altitude->setText(QApplication::translate("MainWindow", "GGA Altitude", 0));
         actionGGA_Position_Difference_12->setText(QApplication::translate("MainWindow", "GGA Position Difference 1/2", 0));
         actionGGA_900_sec_Diff_1_2->setText(QApplication::translate("MainWindow", "GGA 900 sec Diff 1/2", 0));
+        actionCreate_CSV->setText(QApplication::translate("MainWindow", "Create *.CSV", 0));
         tabWidget->setTabText(tabWidget->indexOf(tab_Graph), QApplication::translate("MainWindow", "Graph", 0));
         groupBox->setTitle(QApplication::translate("MainWindow", "Options", 0));
         pushButton->setText(QApplication::translate("MainWindow", "Find", 0));

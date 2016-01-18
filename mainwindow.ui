@@ -131,6 +131,7 @@
     </property>
     <addaction name="actionOpen_File"/>
     <addaction name="actionOpen_File_2"/>
+    <addaction name="actionCreate_CSV"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -294,6 +295,11 @@
   <action name="actionGGA_900_sec_Diff_1_2">
    <property name="text">
     <string>GGA 900 sec Diff 1/2</string>
+   </property>
+  </action>
+  <action name="actionCreate_CSV">
+   <property name="text">
+    <string>Create *.CSV</string>
    </property>
   </action>
  </widget>

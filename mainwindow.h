@@ -64,6 +64,8 @@ private slots:
 
     void on_actionGGA_900_sec_Diff_1_2_triggered();
 
+    void on_actionCreate_CSV_triggered();
+
 private:
     Ui::MainWindow *ui;
 };

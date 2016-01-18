@@ -11,13 +11,13 @@ public:
     static QString CRC(QString nmea);
     static void statMID_CEP(QVector<double> &Vector, double &resCEP, double &resMID);
     static void drawGraph(QCustomPlot *customPlot, QVector<double> &xVal, QVector<double> &yVal,QString xLable, QString yLable, QString graphName);
-    static void drawMidGraph(QCustomPlot *customPlot, double yVal, int xCount);
+    static void drawMidGraph(QCustomPlot *customPlot, double yVal, double xMin, double xMax);
     static void GGA_XY_Vectors(QString fileName, QVector<double> *X1, QVector<double> *Y1, QVector<double> *X4, QVector<double> *Y4, QVector<double> *X5, QVector<double> *Y5, QVector<double> *bf_lf_Rb_Rl);
     static void GGA_Time_Vectors(QString fileName, QVector<double> *X1, QVector<double> *Y1, QVector<double> *X4, QVector<double> *Y4, QVector<double> *X5, QVector<double> *Y5);
     static void GGA_Altitude_Vectors(QString fileName, QVector<double> *X1, QVector<double> *Y1, QVector<double> *X4, QVector<double> *Y4, QVector<double> *X5, QVector<double> *Y5);
-    static double TimeToSeconds(QString timeString);
+    static double TimeToSeconds(QString timeField);
     static void drawGraph3D_Fix_Float(QCustomPlot *customPlot, QVector<double> X1, QVector<double> Y1, QVector<double> X4, QVector<double> Y4, QVector<double> X5, QVector<double> Y5);
-    static void Stat3D_Fix_Float(QTextBrowser *textBrowser, QVector<double> X1, QVector<double> X4, QVector<double> X5);
+    static void Stat3D_Fix_Float(QTextBrowser *textBrowser, QVector<double> *X1, QVector<double> *X4, QVector<double> *X5);
     static void GGA_BLH_Radians(QString GGA_String, double &B, double &L, double &H);
     static void BLH_to_XYZ(QString GGA_String, double &X, double &Y, double &Z);
     static void GGA_to_3D_Fix_Float(QStringList nmea, double X, double Y, QVector<double> *X1, QVector<double> *Y1, QVector<double> *X4, QVector<double> *Y4, QVector<double> *X5, QVector<double> *Y5);
