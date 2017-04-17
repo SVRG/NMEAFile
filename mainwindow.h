@@ -38,7 +38,7 @@ private slots:
 
     void on_actionY_Logarithmic_triggered();
 
-    void on_pushButton_clicked();
+    //void on_pushButton_clicked();
 
     void on_actionBLS_triggered();
 
@@ -65,6 +65,34 @@ private slots:
     void on_actionGGA_900_sec_Diff_1_2_triggered();
 
     void on_actionCreate_CSV_triggered();
+
+    void on_ButtonBLH2XYZ_clicked();
+
+    void on_actionGPX2NMEA_triggered();
+
+    void on_actionStatistics_triggered();
+
+    void on_actionRZD_RMS_Error_triggered();
+
+    void on_actionGGA_Ref_Point_Diff_triggered();
+
+    void on_actionGGA_Coord_Average_triggered();
+
+    void on_actionRMC_Date_Check_triggered();
+
+    void on_actionSDP_Standard_Deviation_triggered();
+
+    void on_Sec2Time_clicked();
+
+    void on_actionRMC_Position_triggered();
+
+    void on_actionGGA_Diff_Time_Check_triggered();
+
+    void on_pushButton_clicked();
+
+    void on_NMEA_String_returnPressed();
+
+    void on_actionPERC_Time_Check_triggered();
 
 private:
     Ui::MainWindow *ui;
