@@ -55,35 +55,9 @@
        </attribute>
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
-         <widget class="QGroupBox" name="groupBox">
-          <property name="title">
-           <string>Options</string>
-          </property>
-          <layout class="QHBoxLayout" name="horizontalLayout_3">
-           <item>
-            <widget class="QPushButton" name="pushButton">
-             <property name="text">
-              <string>Find</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLabel" name="label">
-             <property name="text">
-              <string>Value</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLineEdit" name="referenceValue"/>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item>
          <widget class="QTextBrowser" name="textBrowser">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
@@ -101,11 +75,187 @@
            </size>
           </property>
           <property name="readOnly">
-           <bool>true</bool>
+           <bool>false</bool>
+          </property>
+          <property name="acceptRichText">
+           <bool>false</bool>
           </property>
          </widget>
         </item>
        </layout>
+      </widget>
+      <widget class="QWidget" name="tab_Conv">
+       <attribute name="title">
+        <string>Converter</string>
+       </attribute>
+       <widget class="QLineEdit" name="lineEdit_BLH">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>20</y>
+          <width>311</width>
+          <height>21</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="lineEdit_XYZ">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>70</y>
+          <width>311</width>
+          <height>21</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="ButtonBLH2XYZ">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>40</y>
+          <width>113</width>
+          <height>32</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>BLH -&gt; XYZ</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="lineEdit_BLH2">
+        <property name="geometry">
+         <rect>
+          <x>340</x>
+          <y>20</y>
+          <width>291</width>
+          <height>21</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="lineEdit_XYZ2">
+        <property name="geometry">
+         <rect>
+          <x>340</x>
+          <y>70</y>
+          <width>291</width>
+          <height>21</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="lineEdit_XYZ_Diff">
+        <property name="geometry">
+         <rect>
+          <x>640</x>
+          <y>70</y>
+          <width>113</width>
+          <height>21</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="lineEdit_BLH_Diff">
+        <property name="geometry">
+         <rect>
+          <x>640</x>
+          <y>20</y>
+          <width>113</width>
+          <height>21</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>0</y>
+          <width>91</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Point #1 (GGA)</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_2">
+        <property name="geometry">
+         <rect>
+          <x>340</x>
+          <y>0</y>
+          <width>59</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Point #2</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_3">
+        <property name="geometry">
+         <rect>
+          <x>640</x>
+          <y>0</y>
+          <width>111</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>dX,dY,dZ,dMOD</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="Seconds">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>140</y>
+          <width>113</width>
+          <height>21</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="Time">
+        <property name="geometry">
+         <rect>
+          <x>190</x>
+          <y>140</y>
+          <width>113</width>
+          <height>21</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="Sec2Time">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>160</y>
+          <width>131</width>
+          <height>32</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Seconds &lt;&gt; Time</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="NMEA_String">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>200</y>
+          <width>671</width>
+          <height>21</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="pushButton">
+        <property name="geometry">
+         <rect>
+          <x>700</x>
+          <y>196</y>
+          <width>113</width>
+          <height>32</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Add CRC</string>
+        </property>
+       </widget>
       </widget>
      </widget>
     </item>
@@ -132,6 +282,7 @@
     <addaction name="actionOpen_File"/>
     <addaction name="actionOpen_File_2"/>
     <addaction name="actionCreate_CSV"/>
+    <addaction name="actionGPX2NMEA"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -148,6 +299,7 @@
     <addaction name="actionErrors"/>
     <addaction name="actionGGA_Diff_Age"/>
     <addaction name="actionGGA_Time_Check"/>
+    <addaction name="actionGGA_Diff_Time_Check"/>
     <addaction name="actionGGA_Altitude"/>
     <addaction name="separator"/>
     <addaction name="actionGGA_Position_1_2"/>
@@ -155,17 +307,31 @@
     <addaction name="actionGGA_900_sec_Diff_1_2"/>
     <addaction name="separator"/>
     <addaction name="actionRMC"/>
+    <addaction name="actionRMC_Position"/>
     <addaction name="actionBSS_Distance"/>
     <addaction name="actionBSS_Total_Valid"/>
     <addaction name="separator"/>
     <addaction name="actionBLS"/>
     <addaction name="actionBLS_Course_Difference"/>
     <addaction name="actionHDT_Course"/>
+    <addaction name="actionRZD_RMS_Error"/>
+    <addaction name="actionSDP_Standard_Deviation"/>
+    <addaction name="actionPERC_Time_Check"/>
+   </widget>
+   <widget class="QMenu" name="menuStat">
+    <property name="title">
+     <string>Stat</string>
+    </property>
+    <addaction name="actionStatistics"/>
     <addaction name="actionFind_Errors"/>
+    <addaction name="actionGGA_Ref_Point_Diff"/>
+    <addaction name="actionGGA_Coord_Average"/>
+    <addaction name="actionRMC_Date_Check"/>
    </widget>
    <addaction name="menuNMEA"/>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
+   <addaction name="menuStat"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <property name="enabled">
@@ -215,9 +381,6 @@
    </property>
   </action>
   <action name="actionGGA_Position">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
    <property name="text">
     <string>GGA Position</string>
    </property>
@@ -233,6 +396,12 @@
    </property>
   </action>
   <action name="actionY_Logarithmic">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Y Logarithmic</string>
    </property>
@@ -300,6 +469,56 @@
   <action name="actionCreate_CSV">
    <property name="text">
     <string>Create *.CSV</string>
+   </property>
+  </action>
+  <action name="actionGPX2NMEA">
+   <property name="text">
+    <string>GPX2NMEA</string>
+   </property>
+  </action>
+  <action name="actionStatistics">
+   <property name="text">
+    <string>Statistics</string>
+   </property>
+  </action>
+  <action name="actionRZD_RMS_Error">
+   <property name="text">
+    <string>RZD RMS Error</string>
+   </property>
+  </action>
+  <action name="actionGGA_Ref_Point_Diff">
+   <property name="text">
+    <string>GGA Ref. Point Diff</string>
+   </property>
+  </action>
+  <action name="actionGGA_Coord_Average">
+   <property name="text">
+    <string>GGA Coord Average</string>
+   </property>
+  </action>
+  <action name="actionRMC_Date_Check">
+   <property name="text">
+    <string>RMC Date Check</string>
+   </property>
+  </action>
+  <action name="actionSDP_Standard_Deviation">
+   <property name="text">
+    <string>SDP Standard Deviation</string>
+   </property>
+  </action>
+  <action name="actionRMC_Position">
+   <property name="text">
+    <string>RMC Position</string>
+   </property>
+  </action>
+  <action name="actionGGA_Diff_Time_Check">
+   <property name="text">
+    <string>GGA Diff Time Check</string>
+   </property>
+  </action>
+  <action name="actionPERC_Time_Check">
+   <property name="text">
+    <string>PERC Time Check</string>
    </property>
   </action>
  </widget>
