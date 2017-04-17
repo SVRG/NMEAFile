@@ -59,6 +59,9 @@ public:
     QAction *actionGGA_Position_Difference_12;
     QAction *actionGGA_900_sec_Diff_1_2;
     QAction *actionCreate_CSV;
+    QAction *actionGPX2NMEA;
+    QAction *actionStatistics;
+    QAction *actionRZD_RMS_Error;
     QWidget *centralWidget;
     QHBoxLayout *horizontalLayout;
     QTabWidget *tabWidget;
@@ -73,6 +76,14 @@ public:
     QLabel *label;
     QLineEdit *referenceValue;
     QTextBrowser *textBrowser;
+    QWidget *tab_Conv;
+    QLineEdit *lineEdit_BLH;
+    QLineEdit *lineEdit_XYZ;
+    QPushButton *ButtonBLH2XYZ;
+    QLineEdit *lineEdit_BLH2;
+    QLineEdit *lineEdit_XYZ2;
+    QLineEdit *lineEdit_XYZ_Diff;
+    QLineEdit *lineEdit_BLH_Diff;
     QMenuBar *menuBar;
     QMenu *menuNMEA;
     QMenu *menuFile;
@@ -134,6 +145,12 @@ public:
         actionGGA_900_sec_Diff_1_2->setObjectName(QStringLiteral("actionGGA_900_sec_Diff_1_2"));
         actionCreate_CSV = new QAction(MainWindow);
         actionCreate_CSV->setObjectName(QStringLiteral("actionCreate_CSV"));
+        actionGPX2NMEA = new QAction(MainWindow);
+        actionGPX2NMEA->setObjectName(QStringLiteral("actionGPX2NMEA"));
+        actionStatistics = new QAction(MainWindow);
+        actionStatistics->setObjectName(QStringLiteral("actionStatistics"));
+        actionRZD_RMS_Error = new QAction(MainWindow);
+        actionRZD_RMS_Error->setObjectName(QStringLiteral("actionRZD_RMS_Error"));
         centralWidget = new QWidget(MainWindow);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         centralWidget->setMinimumSize(QSize(0, 469));
@@ -205,6 +222,30 @@ public:
         horizontalLayout_2->addWidget(textBrowser);
 
         tabWidget->addTab(tab_Stat, QString());
+        tab_Conv = new QWidget();
+        tab_Conv->setObjectName(QStringLiteral("tab_Conv"));
+        lineEdit_BLH = new QLineEdit(tab_Conv);
+        lineEdit_BLH->setObjectName(QStringLiteral("lineEdit_BLH"));
+        lineEdit_BLH->setGeometry(QRect(20, 20, 311, 21));
+        lineEdit_XYZ = new QLineEdit(tab_Conv);
+        lineEdit_XYZ->setObjectName(QStringLiteral("lineEdit_XYZ"));
+        lineEdit_XYZ->setGeometry(QRect(20, 70, 311, 21));
+        ButtonBLH2XYZ = new QPushButton(tab_Conv);
+        ButtonBLH2XYZ->setObjectName(QStringLiteral("ButtonBLH2XYZ"));
+        ButtonBLH2XYZ->setGeometry(QRect(10, 40, 113, 32));
+        lineEdit_BLH2 = new QLineEdit(tab_Conv);
+        lineEdit_BLH2->setObjectName(QStringLiteral("lineEdit_BLH2"));
+        lineEdit_BLH2->setGeometry(QRect(340, 20, 291, 21));
+        lineEdit_XYZ2 = new QLineEdit(tab_Conv);
+        lineEdit_XYZ2->setObjectName(QStringLiteral("lineEdit_XYZ2"));
+        lineEdit_XYZ2->setGeometry(QRect(340, 70, 291, 21));
+        lineEdit_XYZ_Diff = new QLineEdit(tab_Conv);
+        lineEdit_XYZ_Diff->setObjectName(QStringLiteral("lineEdit_XYZ_Diff"));
+        lineEdit_XYZ_Diff->setGeometry(QRect(640, 70, 113, 21));
+        lineEdit_BLH_Diff = new QLineEdit(tab_Conv);
+        lineEdit_BLH_Diff->setObjectName(QStringLiteral("lineEdit_BLH_Diff"));
+        lineEdit_BLH_Diff->setGeometry(QRect(640, 20, 113, 21));
+        tabWidget->addTab(tab_Conv, QString());
 
         horizontalLayout->addWidget(tabWidget);
 
@@ -233,6 +274,7 @@ public:
         menuFile->addAction(actionOpen_File);
         menuFile->addAction(actionOpen_File_2);
         menuFile->addAction(actionCreate_CSV);
+        menuFile->addAction(actionGPX2NMEA);
         menuView->addAction(actionScale);
         menuView->addAction(actionScale_Y);
         menuView->addAction(actionScale_XY);
@@ -258,6 +300,8 @@ public:
         menuView->addAction(actionBLS_Course_Difference);
         menuView->addAction(actionHDT_Course);
         menuView->addAction(actionFind_Errors);
+        menuView->addAction(actionStatistics);
+        menuView->addAction(actionRZD_RMS_Error);
 
         retranslateUi(MainWindow);
 
@@ -294,11 +338,16 @@ public:
         actionGGA_Position_Difference_12->setText(QApplication::translate("MainWindow", "GGA Position Difference 1/2", 0));
         actionGGA_900_sec_Diff_1_2->setText(QApplication::translate("MainWindow", "GGA 900 sec Diff 1/2", 0));
         actionCreate_CSV->setText(QApplication::translate("MainWindow", "Create *.CSV", 0));
+        actionGPX2NMEA->setText(QApplication::translate("MainWindow", "GPX2NMEA", 0));
+        actionStatistics->setText(QApplication::translate("MainWindow", "Statistics", 0));
+        actionRZD_RMS_Error->setText(QApplication::translate("MainWindow", "RZD RMS Error", 0));
         tabWidget->setTabText(tabWidget->indexOf(tab_Graph), QApplication::translate("MainWindow", "Graph", 0));
         groupBox->setTitle(QApplication::translate("MainWindow", "Options", 0));
         pushButton->setText(QApplication::translate("MainWindow", "Find", 0));
         label->setText(QApplication::translate("MainWindow", "Value", 0));
         tabWidget->setTabText(tabWidget->indexOf(tab_Stat), QApplication::translate("MainWindow", "Stat", 0));
+        ButtonBLH2XYZ->setText(QApplication::translate("MainWindow", "BLH -> XYZ", 0));
+        tabWidget->setTabText(tabWidget->indexOf(tab_Conv), QApplication::translate("MainWindow", "Converter", 0));
         menuNMEA->setTitle(QApplication::translate("MainWindow", "NMEA", 0));
         menuFile->setTitle(QApplication::translate("MainWindow", "File", 0));
         menuView->setTitle(QApplication::translate("MainWindow", "View", 0));
