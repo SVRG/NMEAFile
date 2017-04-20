@@ -54,11 +54,11 @@ public:
     static double TimeToQDateTime(QString timeField, int day = 0);
     static QString doubleToString(double number);
 
-
-
-
-
-
+    // SQLite DB
+    static void loadFileToDB(QString fileName); // Тестовая
+    static void getDataFromDB();                // Тестовая
+    static void dbGGA_XYTime_0_Vectors(QString fileName, QString table_name, QVector<double> *bf_lf_Rb_Rl);
+    static void dbGGA_2Files_Diff(QString fileName1, QString fileName2, QVector<double> *Time, QVector<double> *Diff);
 
 };
 
