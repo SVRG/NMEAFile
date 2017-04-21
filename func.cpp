@@ -908,7 +908,7 @@ void func::dbGGA_XYTime_0_Vectors(QString fileName, QString table_name, QVector<
             int i=0;
 
             QSqlDatabase dbase = QSqlDatabase::addDatabase("QSQLITE");
-                dbase.setDatabaseName("app_db.sqlite");
+                dbase.setDatabaseName(":memory");
                 if (!dbase.open()) {
                     qDebug() << "Не удается открыть БД";
                 }
@@ -916,23 +916,26 @@ void func::dbGGA_XYTime_0_Vectors(QString fileName, QString table_name, QVector<
                 QSqlQuery query;
 
                     // удаляем таблицу
-                    // todo - Если несколько сравнений то не надо удалять главную таблицу (с которой сравиниваем)
                     query.prepare("DROP TABLE IF EXISTS "+table_name+";");
 
                     if (!query.exec()) {
-                        qDebug() << "DROP TABLE Err";
+                        qDebug() << "dbGGA_XYTime_0_Vectors DROP TABLE Err: " << query.lastError();
                     }
 
                     query.prepare("CREATE TABLE "+table_name+"("
                                     "id_time INTEGER PRIMARY KEY AUTOINCREMENT, "
                                     "time doudle,"
                                     "x double,"
-                                    "y double"
+                                    "y double,"
+                                    "type INTEGER"
                                     ");");
 
                     if (!query.exec()) {
-                        qDebug() << "Не удается создать таблицу";
+                        qDebug() << "dbGGA_XYTime_0_Vectors Не удается создать таблицу: " << query.lastError();
                     }
+
+                    // Старт транзакции
+                    dbase.transaction();
 
             // Пока не достигнем конца файла читаем строчки
             while (!in.atEnd()) {
@@ -953,6 +956,8 @@ void func::dbGGA_XYTime_0_Vectors(QString fileName, QString table_name, QVector<
                           notValid++;
                           continue;
                       }
+
+                      QString type = nmea[6];
 
                       // Вариант трека по приращениям (Storegis)
                       // Начальная точка. Вычисляем коэффициенты один раз?
@@ -982,30 +987,31 @@ void func::dbGGA_XYTime_0_Vectors(QString fileName, QString table_name, QVector<
                       time = func::TimeToSeconds(nmea[1]);
 
                       // DML
-                      query.prepare("INSERT INTO "+table_name+"(time, x, y)"
-                                    "VALUES (:time, :x, :y);");
+                      query.prepare("INSERT INTO "+table_name+"(time, x, y, type)"
+                                    "VALUES (:time, :x, :y, :type);");
                       query.bindValue(":time",time);
                       query.bindValue(":x",x);
                       query.bindValue(":y",y);
+                      query.bindValue(":type",type.toInt());
 
                       if (!query.exec()) {
-                            qDebug() << "Данные не вставляются" << time;
+                            qDebug() << "dbGGA_XYTime_0_Vectors Данные не вставляются: " << query.lastError();
                             continue;
                       }
 
                       // Счетчик для валидных решений
                       i++;
-
                     }
                }
-               inputFile.close();
-               qDebug() << "Вставлено: " << i;
+
+            dbase.commit(); // Конец транзакции
+            inputFile.close();
+            qDebug() << "Вставлено: " << i;
         }
     }
 }
 //----------------------------------------------------------------------------------------------------------------
 // GGA - разности по 2D координатам в двух файлах
-// todo - переделать с БД
 void func::GGA_2Files_Diff(QString fileName1, QString fileName2, QVector<double> *X1, QVector<double> *Y1, QVector<double> *X2, QVector<double> *Y2)
 {
     QVector<double> Time1, Time2, X, Y;
@@ -1023,8 +1029,6 @@ void func::GGA_2Files_Diff(QString fileName1, QString fileName2, QVector<double>
 
     // Есть два массива координаты и время по двум файлам
     // Надо синхронизировать время
-    // Вариант БД - SELECT * FROM gga INNER JOIN gga1 ON gga.time = gga1.time (где time время с начала недели?)
-
     for(int i=0;i<Time1.count();i++)
     {
         // Если первый файл начинается раньше второго
@@ -1051,21 +1055,15 @@ void func::GGA_2Files_Diff(QString fileName1, QString fileName2, QVector<double>
 //----------------------------------------------------------------------------------------------------------------
 // Реализация БД
 // GGA - разности по 2D координатам в двух файлах
-void func::dbGGA_2Files_Diff(QString fileName1, QString fileName2, QVector<double> *Time, QVector<double> *Diff)
+void func::dbGGA_2Files_Diff(QVector<double> *Time, QVector<double> *Diff)
 {
     QVector<double> bf_lf_Rb_Rl;
-
-    func::dbGGA_XYTime_0_Vectors(fileName1,"gga",&bf_lf_Rb_Rl);
-
-    func::dbGGA_XYTime_0_Vectors(fileName2,"gga1",&bf_lf_Rb_Rl);
-
-    // todo - добавить проверку на наличие записей в таблицах
 
     // Есть два массива координаты и время по двум файлам
     // Надо синхронизировать время
     QSqlDatabase dbase = QSqlDatabase::addDatabase("QSQLITE");
 
-    dbase.setDatabaseName("app_db.sqlite");
+    dbase.setDatabaseName(":memory");
 
     if (!dbase.open()) {
             qDebug() << "Не удается подключиться к БД";
@@ -1074,16 +1072,17 @@ void func::dbGGA_2Files_Diff(QString fileName1, QString fileName2, QVector<doubl
     QSqlQuery query;
     query.prepare("SELECT "
                       "gga.time AS time, "
-                      "gga.x,gga.y, "
-                      "gga1.x AS x1,"
+                      "gga.x,gga.y,gga.type, "
+                      "gga1.x AS x1, "
                       "gga1.y AS y1 "
                   "FROM "
-                      "gga INNER JOIN gga1 ON gga.time = gga1.time");
+                      "gga INNER JOIN gga1 ON gga.time = gga1.time;");
 
     if (!query.exec()) {
-        qDebug() << "SELECT Err";
+        qDebug() << "SELECT Err dbGGA_2Files_Diff";
     }
 
+    // todo - добавить проверку на наличие записей в таблицах
     QSqlRecord rec = query.record();
     double time = 0., x = 0., y=0., x1=0., y1=0.;
 

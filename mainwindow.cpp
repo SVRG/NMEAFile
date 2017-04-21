@@ -83,6 +83,7 @@ void MainWindow::on_actionOpen_File_triggered()
         //  MainWindow::on_actionGGA_Position_triggered();
         */
         ui->customPlot->clearGraphs(); // Очищаем графики
+        fileNames.clear(); // Очищаем файлы
         return;
 
     }
@@ -1784,14 +1785,17 @@ void MainWindow::on_actionGGA_Position_Difference_12_triggered()
 
     ui->customPlot->clearGraphs();
     // Массивы координат
-    QVector<double> Time, Diff;
+    QVector<double> Time, Diff, param;
 
     int filesCount = fileNames.count(); // Количество файлов для сравнения
+
+    func::dbGGA_XYTime_0_Vectors(fileName,"gga",&param);
 
     // Выполняем вычисления по всем файлам
     for(int i=0;i<filesCount;i++)
     {
-        func::dbGGA_2Files_Diff(fileName,fileNames[i],&Time,&Diff); // todo - file1 читать один раз!
+        func::dbGGA_XYTime_0_Vectors(fileNames[i],"gga1",&param);
+        func::dbGGA_2Files_Diff(&Time,&Diff);
 
         func::drawGraph(ui->customPlot,Time,Diff,"Time","Diff, m",fileNames[i]);
 

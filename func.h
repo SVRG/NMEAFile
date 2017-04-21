@@ -58,7 +58,7 @@ public:
     static void loadFileToDB(QString fileName); // Тестовая
     static void getDataFromDB();                // Тестовая
     static void dbGGA_XYTime_0_Vectors(QString fileName, QString table_name, QVector<double> *bf_lf_Rb_Rl);
-    static void dbGGA_2Files_Diff(QString fileName1, QString fileName2, QVector<double> *Time, QVector<double> *Diff);
+    static void dbGGA_2Files_Diff(QVector<double> *Time, QVector<double> *Diff);
 
 };
 
