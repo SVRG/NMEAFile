@@ -904,8 +904,10 @@ void func::dbGGA_XYTime_0_Vectors(QString fileName, QString table_name, QVector<
             // Счетчик невалидных решений
             int notValid=0;
 
-            // Счетчик времени (решений)
-            int i=0;
+            // Счетчик времени (решений), дни
+            int i=0, day=0;
+
+            double maxTime = -1;
 
             QSqlDatabase dbase = QSqlDatabase::addDatabase("QSQLITE");
                 dbase.setDatabaseName(":memory");
@@ -984,10 +986,10 @@ void func::dbGGA_XYTime_0_Vectors(QString fileName, QString table_name, QVector<
 
                       // Вычисляем относительные координаты
                       func::GGA_BLH_to_XY_0(line, x, y, bf_lf_Rb_Rl->value(0), bf_lf_Rb_Rl->value(1), bf_lf_Rb_Rl->value(2), bf_lf_Rb_Rl->value(3));
-                      time = func::TimeToSeconds(nmea[1]);
+                      time = func::timeToSeconds(nmea[1],maxTime,day);
 
                       // DML
-                      query.prepare("INSERT INTO "+table_name+"(time, x, y, type)"
+                      query.prepare("INSERT INTO "+table_name+"(time, x, y, type) "
                                     "VALUES (:time, :x, :y, :type);");
                       query.bindValue(":time",time);
                       query.bindValue(":x",x);
@@ -1076,10 +1078,10 @@ void func::dbGGA_2Files_Diff(QVector<double> *Time, QVector<double> *Diff)
                       "gga1.x AS x1, "
                       "gga1.y AS y1 "
                   "FROM "
-                      "gga INNER JOIN gga1 ON gga.time = gga1.time;");
+                      "gga INNER JOIN gga1 ON gga.time = gga1.time WHERE gga.type=4;"); // todo - задавать тип решения
 
     if (!query.exec()) {
-        qDebug() << "SELECT Err dbGGA_2Files_Diff";
+        qDebug() << "SELECT Err dbGGA_2Files_Diff " << query.lastError();
     }
 
     // todo - добавить проверку на наличие записей в таблицах
