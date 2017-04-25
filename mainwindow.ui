@@ -20,7 +20,7 @@
      <height>469</height>
     </size>
    </property>
-   <layout class="QHBoxLayout" name="horizontalLayout">
+   <layout class="QVBoxLayout" name="verticalLayout">
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
@@ -53,7 +53,7 @@
        <attribute name="title">
         <string>Stat</string>
        </attribute>
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
          <widget class="QTextBrowser" name="textBrowser">
           <property name="sizePolicy">
@@ -78,6 +78,13 @@
            <bool>false</bool>
           </property>
           <property name="acceptRichText">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="commandLine">
+          <property name="clearButtonEnabled">
            <bool>false</bool>
           </property>
          </widget>

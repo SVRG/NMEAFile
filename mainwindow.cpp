@@ -20,10 +20,10 @@ QString fileName="", graphName=""; // Путь к файлу, Название �
 
 QStringList fileNames; // Список файлов
 
-double greferenceValue = 0.; // Эталонное значение для сравнения и статистики
+QString referencePointGGA = "$GPGGA,040148.40,5544.5523183,N,03731.3598778,E,4,14,0.7,174.288,M,14.760,M,0.4,0017*4C"; // Эталонная строка координат, по умолчанию Кабель 1.
+QString referencePointGGA1 = "$GPGGA,040148.40,5544.5523183,N,03731.3598778,E,4,14,0.7,174.288,M,14.760,M,0.4,0017*4C"; // Эталонная строка координат Кабель 1.
+QString referencePointGGA2 =  "$GPGGA,190747.00,5544.5518312,N,03731.3602986,E,4,15,0.7,174.286,M,14.760,M,1.0,0017*4A";  // Эталонная строка координат Кабель 2
 
-//QString referencePointGGA = "$GPGGA,040148.40,5544.5523183,N,03731.3598778,E,4,14,0.7,174.288,M,14.760,M,0.4,0017*40"; // Эталонная строка координат Кабель 1. Контрольная сумма - неправильная
-QString referencePointGGA =  "$GPGGA,190747.00,5544.5518312,N,03731.3602986,E,4,15,0.7,174.286,M,14.760,M,1.0,0017*4A"; // Эталонная строка координат Кабель 2
 
 QString fileTypes = "NMEA LOG-Files (*.nme *.log *.txt *.gpx);;All Files (*)"; // Типы файлов
 
@@ -45,7 +45,7 @@ MainWindow::~MainWindow()
 // Открываем файл----------------------------------------------------------------------------------------
 void MainWindow::on_actionOpen_File_triggered()
 {
-    fileName = QFileDialog::getOpenFileName(this, tr("Open File..."), QString(), fileTypes);
+    fileName = QFileDialog::getOpenFileName(this, tr("Open File..."), "/Users/svrg/Downloads", fileTypes);
     if(!fileName.isEmpty())
     {
         /*
@@ -85,7 +85,6 @@ void MainWindow::on_actionOpen_File_triggered()
         ui->customPlot->clearGraphs(); // Очищаем графики
         fileNames.clear(); // Очищаем файлы
         return;
-
     }
     else
     {
@@ -3004,4 +3003,44 @@ void MainWindow::on_actionPERC_Time_Check_triggered()
     // Очищаем и рисуем графики
     ui->customPlot->clearGraphs();
     func::drawGraph(ui->customPlot,X1,Y1,"TOW","Counter","PERC Time Check");
+}
+//----------------------------------------------------------------------------------------
+// Командная строка - нажат return
+void MainWindow::on_commandLine_returnPressed()
+{
+    ui->textBrowser->append(ui->commandLine->text());
+
+    QString command = ui->commandLine->text().simplified();
+
+    if(command.contains("set"))// Установка
+    {
+        if(command.contains("refpoint")){ // Установка опорной точки, формат set refpoint $GPGGA....*<CRC>
+            if(command.split(" ").count()==3)
+            {
+                referencePointGGA = command.split(" ")[2];
+                ui->textBrowser->append(referencePointGGA);
+            }
+            else
+                qDebug() << "Err comandLine count";
+            }
+    }
+
+    if(command.contains("get")) // Запрос
+    {
+        if(command.contains("refpoint1"))
+            {
+                ui->textBrowser->append(referencePointGGA1);
+            }
+        else
+        if(command.contains("refpoint2"))
+            {
+                ui->textBrowser->append(referencePointGGA2);
+            }
+        else
+        if(command.contains("refpoint"))
+            {
+                ui->textBrowser->append(referencePointGGA);
+            }
+    }
+
 }
