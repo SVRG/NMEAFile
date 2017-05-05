@@ -909,19 +909,33 @@ void func::dbGGA_XYTime_0_Vectors(QString fileName, QString table_name, QVector<
 
             double maxTime = -1;
 
-            QSqlDatabase dbase = QSqlDatabase::addDatabase("QSQLITE");
-                dbase.setDatabaseName(":memory");
-                if (!dbase.open()) {
-                    qDebug() << "Не удается открыть БД";
-                }
+            QSqlDatabase dbase;
 
-                QSqlQuery query;
+            if( QSqlDatabase::contains( "dbConnection" ) )
+            {
+                dbase = QSqlDatabase::database( "dbConnection" );
+            }
+            else
+            {
+                dbase = QSqlDatabase::addDatabase("QSQLITE","dbConnection");
+
+                QString dbPath = QCoreApplication::applicationDirPath() + "/";
+                dbase.setDatabaseName(dbPath + "appDB.sqlite");
+            }
+
+            if (!dbase.open()) {
+                qDebug() << "dbGGA_XYTime_0_Vectors: Не удается открыть БД - " << dbase.lastError();
+                QMessageBox::critical(0,"DB Err","dbGGA_XYTime_0_Vectors: "+dbase.lastError().text(),QMessageBox::Ok);
+                return;
+            }
+
+            QSqlQuery query(dbase);
 
                     // удаляем таблицу
                     query.prepare("DROP TABLE IF EXISTS "+table_name+";");
 
                     if (!query.exec()) {
-                        qDebug() << "dbGGA_XYTime_0_Vectors DROP TABLE Err: " << query.lastError();
+                        qDebug() << "dbGGA_XYTime_0_Vectors: DROP TABLE Err - " << query.lastError();
                     }
 
                     query.prepare("CREATE TABLE "+table_name+"("
@@ -1057,21 +1071,33 @@ void func::GGA_2Files_Diff(QString fileName1, QString fileName2, QVector<double>
 //----------------------------------------------------------------------------------------------------------------
 // Реализация БД
 // GGA - разности по 2D координатам в двух файлах
+// Есть два массива координаты и время по двум файлам
+// Надо синхронизировать время
 void func::dbGGA_2Files_Diff(QVector<double> *Time, QVector<double> *Diff)
 {
     QVector<double> bf_lf_Rb_Rl;
 
-    // Есть два массива координаты и время по двум файлам
-    // Надо синхронизировать время
-    QSqlDatabase dbase = QSqlDatabase::addDatabase("QSQLITE");
+    QSqlDatabase dbase;
 
-    dbase.setDatabaseName(":memory");
+    if( QSqlDatabase::contains( "dbConnection" ) )
+    {
+        dbase = QSqlDatabase::database( "dbConnection" );
+    }
+    else
+    {
+        dbase = QSqlDatabase::addDatabase("QSQLITE","dbConnection");
 
-    if (!dbase.open()) {
-            qDebug() << "Не удается подключиться к БД";
+        QString dbPath = QCoreApplication::applicationDirPath() + "/";
+        dbase.setDatabaseName(dbPath + "appDB.sqlite");
     }
 
-    QSqlQuery query;
+    if (!dbase.open()) {
+            qDebug() << "dbGGA_2Files_Diff: Не удается подключиться к БД - " << dbase.lastError();
+            QMessageBox::critical(0,"DB Err","dbGGA_2Files_Diff: "+dbase.lastError().text(),QMessageBox::Ok);
+            return;
+    }
+
+    QSqlQuery query(dbase);
     query.prepare("SELECT "
                       "gga.time AS time, "
                       "gga.x,gga.y,gga.type, "
@@ -1081,7 +1107,9 @@ void func::dbGGA_2Files_Diff(QVector<double> *Time, QVector<double> *Diff)
                       "gga INNER JOIN gga1 ON gga.time = gga1.time WHERE gga.type=4;"); // todo - задавать тип решения
 
     if (!query.exec()) {
-        qDebug() << "SELECT Err dbGGA_2Files_Diff " << query.lastError();
+        qDebug() << "dbGGA_2Files_Diff: SELECT Err - " << query.lastError();
+        QMessageBox::critical(0,"SELECT Err","dbGGA_2Files_Diff: "+dbase.lastError().text(),QMessageBox::Ok);
+        return;
     }
 
     // todo - добавить проверку на наличие записей в таблицах
