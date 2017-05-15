@@ -19,6 +19,7 @@ Roadmap
 QString fileName="", graphName=""; // Путь к файлу, Название графика
 
 QStringList fileNames; // Список файлов
+QString default_dir = "/Users/svrg/Downloads"; // Папка по умолчанию
 
 QString referencePointGGA = "$GPGGA,040148.40,5544.5523183,N,03731.3598778,E,4,14,0.7,174.288,M,14.760,M,0.4,0017*4C"; // Эталонная строка координат, по умолчанию Кабель 1.
 QString referencePointGGA1 = "$GPGGA,040148.40,5544.5523183,N,03731.3598778,E,4,14,0.7,174.288,M,14.760,M,0.4,0017*4C"; // Эталонная строка координат Кабель 1.
@@ -37,7 +38,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    // todo - очистить таблицы?
+    if(QFile::exists(QCoreApplication::applicationDirPath() + "/:memory:")) // Удаляем БД
+        QFile::remove(QCoreApplication::applicationDirPath() + "/:memory:");
+
     delete ui;
 }
 
@@ -45,7 +48,7 @@ MainWindow::~MainWindow()
 // Открываем файл----------------------------------------------------------------------------------------
 void MainWindow::on_actionOpen_File_triggered()
 {
-    fileName = QFileDialog::getOpenFileName(this, tr("Open File..."), "/Users/svrg/Downloads", fileTypes);
+    fileName = QFileDialog::getOpenFileName(this, tr("Open File..."), default_dir , fileTypes);
     if(!fileName.isEmpty())
     {
         /*
@@ -1673,10 +1676,7 @@ void MainWindow::on_actionFind_Errors_triggered()
 // Открыть второй файл для сравнения с первым
 void MainWindow::on_actionOpen_File_2_triggered()
 {
-//    fileName2 = QFileDialog::getOpenFileName(this, tr("Open File..."), QString(), tr("NMEA LOG-Files (*.nme *.log);;All Files (*)"));
-    fileNames = QFileDialog::getOpenFileNames(this, tr("Open File..."), QString(), fileTypes);
-//    fileName = fileNames[0];
-//    fileName2 = fileNames[1];
+    fileNames = QFileDialog::getOpenFileNames(this, tr("Open File..."), default_dir , fileTypes);
 }
 
 //  --------------------------------------------------------------------------------------
@@ -2256,17 +2256,22 @@ void MainWindow::on_actionGPX2NMEA_triggered()
         }
 }
 //---------------------------------------------------------------------------------------------------------
-// Статистика по файлу
+// Статистика по файлам
 void MainWindow::on_actionStatistics_triggered()
 {
     // Если fileName пустой - открыть Диалог. Файл откуда читаем
-    if(fileName.isEmpty())
-        MainWindow::on_actionOpen_File_triggered();
+    if(fileNames.isEmpty())
+        MainWindow::on_actionOpen_File_2_triggered();
 
      ui->tabWidget->setCurrentIndex(1); // Переходим на вкладку Stat
 
-     func::Statistics(fileName, ui->textBrowser);
+     // Очищаем Текст
+     ui->textBrowser->setText("");
 
+     for(int i=0;i<fileNames.count();i++)
+         func::Statistics(fileNames[i], ui->textBrowser);
+
+     fileNames.clear(); // Очищаем файлы
 }
 //---------------------------------------------------------------------------------------------------------
 // Оценка СКО
