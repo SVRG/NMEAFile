@@ -1,6 +1,8 @@
 #include "func.h"
 #include <QVector>
 #include <QtMath>
+#include <QtGui>
+#include <QtSql>
 
 func::func()
 {
@@ -885,6 +887,132 @@ void func::GGA_XYTime_0_Vectors(QString fileName, QVector<double> *X1, QVector<d
     }
 }
 //----------------------------------------------------------------------------------------------------------------
+// Реализация DB
+// GGA - трек относитеотно начальной точки. Дополнительно передаются параметры
+void func::dbGGA_XYTime_0_Vectors(QString fileName, QString table_name, QVector<double> *bf_lf_Rb_Rl)
+{
+    // Если имя не пустое то загружаем содержимое
+    if (!fileName.isEmpty())
+        {
+        // Связываем переменную с физическим файлом
+        QFile inputFile(fileName);
+        // Если все ОК то открываем файл
+        if (inputFile.open(QIODevice::ReadOnly)){
+
+            QTextStream in(&inputFile);
+
+            // Счетчик невалидных решений
+            int notValid=0;
+
+            // Счетчик времени (решений), дни
+            int i=0, day=0;
+
+            double maxTime = -1;
+
+            QSqlDatabase dbase = QSqlDatabase::addDatabase("QSQLITE");
+                dbase.setDatabaseName(":memory");
+                if (!dbase.open()) {
+                    qDebug() << "Не удается открыть БД";
+                }
+
+                QSqlQuery query;
+
+                    // удаляем таблицу
+                    query.prepare("DROP TABLE IF EXISTS "+table_name+";");
+
+                    if (!query.exec()) {
+                        qDebug() << "dbGGA_XYTime_0_Vectors DROP TABLE Err: " << query.lastError();
+                    }
+
+                    query.prepare("CREATE TABLE "+table_name+"("
+                                    "id_time INTEGER PRIMARY KEY AUTOINCREMENT, "
+                                    "time doudle,"
+                                    "x double,"
+                                    "y double,"
+                                    "type INTEGER"
+                                    ");");
+
+                    if (!query.exec()) {
+                        qDebug() << "dbGGA_XYTime_0_Vectors Не удается создать таблицу: " << query.lastError();
+                    }
+
+                    // Старт транзакции
+                    dbase.transaction();
+
+            // Пока не достигнем конца файла читаем строчки
+            while (!in.atEnd()) {
+                  // Считываем строку
+                  QString line = in.readLine();
+
+                  // Если строка содежит GGA
+                  // $GPGGA,113448.601,5452.3307572,N,08258.7870772,E,1,17,0.8,160.927,M,    ,M  ,0.6,  *6F
+                  //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
+                  if(func::GGA_Check(line)) // Ищем строку GGA
+                  {
+
+                      // Разбиваем строку по запятой
+                      QStringList nmea = line.split(',');
+
+                      // Если данные не достоверны - пропускаем
+                      if(nmea[6]=="0"){
+                          notValid++;
+                          continue;
+                      }
+
+                      QString type = nmea[6];
+
+                      // Вариант трека по приращениям (Storegis)
+                      // Начальная точка. Вычисляем коэффициенты один раз?
+                      if(i==1 and bf_lf_Rb_Rl->count()<4) // Первое валидное решение, если не были заданы коэффициенты
+                      {
+                          // BLH->XYZ Строковые и числовые переменные
+                          double B=0.,L=0.,H=0., R_b=0, R_l=0;
+
+                          func::GGA_BLH_Radians(line,B,L,H);
+
+                          func::GGA_R_b_R_l(line,R_b,R_l);
+                          double b_fix=B; // Начальная широта
+                          double l_fix=L; // Начальная долгота
+
+                          // Передаем вектор начальных условий и Коэффициенты
+                          bf_lf_Rb_Rl->append(b_fix);
+                          bf_lf_Rb_Rl->append(l_fix);
+                          bf_lf_Rb_Rl->append(R_b);
+                          bf_lf_Rb_Rl->append(R_l);
+                      }
+
+
+                      double x=0., y=0., time;
+
+                      // Вычисляем относительные координаты
+                      func::GGA_BLH_to_XY_0(line, x, y, bf_lf_Rb_Rl->value(0), bf_lf_Rb_Rl->value(1), bf_lf_Rb_Rl->value(2), bf_lf_Rb_Rl->value(3));
+                      time = func::timeToSeconds(nmea[1],maxTime,day);
+
+                      // DML
+                      query.prepare("INSERT INTO "+table_name+"(time, x, y, type) "
+                                    "VALUES (:time, :x, :y, :type);");
+                      query.bindValue(":time",time);
+                      query.bindValue(":x",x);
+                      query.bindValue(":y",y);
+                      query.bindValue(":type",type.toInt());
+
+                      if (!query.exec()) {
+                            qDebug() << "dbGGA_XYTime_0_Vectors Данные не вставляются: " << query.lastError();
+                            continue;
+                      }
+
+                      // Счетчик для валидных решений
+                      i++;
+                    }
+               }
+
+            dbase.commit(); // Конец транзакции
+            inputFile.close();
+            qDebug() << "Вставлено: " << i;
+        }
+    }
+}
+//----------------------------------------------------------------------------------------------------------------
 // GGA - разности по 2D координатам в двух файлах
 void func::GGA_2Files_Diff(QString fileName1, QString fileName2, QVector<double> *X1, QVector<double> *Y1, QVector<double> *X2, QVector<double> *Y2)
 {
@@ -903,7 +1031,6 @@ void func::GGA_2Files_Diff(QString fileName1, QString fileName2, QVector<double>
 
     // Есть два массива координаты и время по двум файлам
     // Надо синхронизировать время
-
     for(int i=0;i<Time1.count();i++)
     {
         // Если первый файл начинается раньше второго
@@ -927,6 +1054,56 @@ void func::GGA_2Files_Diff(QString fileName1, QString fileName2, QVector<double>
     X1->append(X);
     Y1->append(Y);
 }
+//----------------------------------------------------------------------------------------------------------------
+// Реализация БД
+// GGA - разности по 2D координатам в двух файлах
+void func::dbGGA_2Files_Diff(QVector<double> *Time, QVector<double> *Diff)
+{
+    QVector<double> bf_lf_Rb_Rl;
+
+    // Есть два массива координаты и время по двум файлам
+    // Надо синхронизировать время
+    QSqlDatabase dbase = QSqlDatabase::addDatabase("QSQLITE");
+
+    dbase.setDatabaseName(":memory");
+
+    if (!dbase.open()) {
+            qDebug() << "Не удается подключиться к БД";
+    }
+
+    QSqlQuery query;
+    query.prepare("SELECT "
+                      "gga.time AS time, "
+                      "gga.x,gga.y,gga.type, "
+                      "gga1.x AS x1, "
+                      "gga1.y AS y1 "
+                  "FROM "
+                      "gga INNER JOIN gga1 ON gga.time = gga1.time WHERE gga.type=4;"); // todo - задавать тип решения
+
+    if (!query.exec()) {
+        qDebug() << "SELECT Err dbGGA_2Files_Diff " << query.lastError();
+    }
+
+    // todo - добавить проверку на наличие записей в таблицах
+    QSqlRecord rec = query.record();
+    double time = 0., x = 0., y=0., x1=0., y1=0.;
+
+    while (query.next()) {
+            time = query.value(rec.indexOf("time")).toDouble();
+            x = query.value(rec.indexOf("x")).toDouble();
+            y = query.value(rec.indexOf("y")).toDouble();
+            x1 = query.value(rec.indexOf("x1")).toDouble();
+            y1 = query.value(rec.indexOf("y1")).toDouble();
+
+            double x_diff = x-x1;
+            double y_diff = y-y1;
+            double diff=sqrt(x_diff*x_diff+y_diff*y_diff);
+
+            Time->append(time);
+            Diff->append(diff);
+    }
+}
+//----------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------
 // Time - найти ближайшее время. Вынести глубину поиска в параметр?
 int func::Nearest_Time(double time, QVector<double> *TimeVector, int Start)
@@ -978,6 +1155,7 @@ return(-1);
 }
 //----------------------------------------------------------------------------------------------------------------
 // GGA - разности по вектору ошибок от эталонного трека, между текущей точкой и через 900 секунд
+// todo - переделать с БД
 void func::GGA_2Files_Diff_900(QString fileName1, QString fileName2, QVector<double> *X1, QVector<double> *Y1, QVector<double> *X2, QVector<double> *Y2)
 {
     func::GGA_2Files_Diff(fileName1,fileName2,X1,Y1,X2,Y2);
@@ -1433,5 +1611,104 @@ void func::PERC_Time_Vectors(QString fileName, QVector<double> *X1, QVector<doub
            }
            inputFile.close();
         }
+    }
+}
+//----------------------------------------------------------------------------------------------------------------
+// Загрузка файла в БД
+void func::loadFileToDB(QString fileName)
+{
+    QSqlDatabase dbase = QSqlDatabase::addDatabase("QSQLITE");
+        dbase.setDatabaseName("app_db.sqlite");
+        if (!dbase.open()) {
+            qDebug() << "Не удается открыть БД";
+        }
+
+        QSqlQuery query;
+
+            // todo - добавить проверку на существование таблицы
+            query.prepare("DROP TABLE IF EXISTS gga;");
+
+            if (!query.exec()) {
+                qDebug() << "DROP TABLE Err";
+            }
+
+            query.prepare("CREATE TABLE gga("
+                            "id_time INTEGER PRIMARY KEY AUTOINCREMENT, "
+                            "time doudle, "
+                            "height double"
+                            ");");
+
+            if (!query.exec()) {
+                qDebug() << "Не удается создать таблицу";
+            }
+
+            // Связываем переменную с физическим файлом
+            QFile inputFile(fileName);
+            // Если все ОК то открываем файл
+            if (inputFile.open(QIODevice::ReadOnly))
+            {
+               QTextStream in(&inputFile);
+               // Пока не достигнем конца файла читаем строчки
+               while (!in.atEnd()) {
+                  // Считываем строку
+                  QString line = in.readLine();
+
+                  // Если строка содежит GGA
+                  // $GPGGA,113448.601,5452.3307572,N,08258.7870772,E,1,17,0.8,160.927,M,    ,M  ,0.6,  *6F
+                  //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
+                  if(line.contains("GGA"))
+                  {
+
+                      // Разбиваем строку по запятой
+                      QStringList nmea = line.split(',');
+
+                      // Если решение невалидное - пропускаем
+                      if(nmea[6]=="0")
+                          continue;
+
+                      // DML
+                      query.prepare("INSERT INTO gga(time, height)"
+                                "VALUES (:time, :height);");
+                      query.bindValue(":time",nmea[1]);
+                      query.bindValue(":height",nmea[9]);
+
+                      if (!query.exec()) {
+                            qDebug() << "Данные не вставляются";
+                      }
+                  }
+               }
+            }
+
+}
+//----------------------------------------------------------------------------------------------------------------
+// Получение данных из БД
+void func::getDataFromDB()
+{
+    QSqlDatabase dbase = QSqlDatabase::addDatabase("QSQLITE");
+
+    dbase.setDatabaseName("app_db.sqlite");
+
+    if (!dbase.open()) {
+            qDebug() << "Не удается подключиться к БД";
+        }
+
+    QSqlQuery query;
+
+    query.prepare("SELECT * FROM gga INNER JOIN gga1 ON gga.time = gga1.time");
+
+    if (!query.exec()) {
+        qDebug() << "SELECT Err";
+    }
+
+    QSqlRecord rec = query.record();
+    double time = 0.,
+           height = 0.;
+
+    while (query.next()) {
+            time = query.value(rec.indexOf("time")).toDouble();
+            height = query.value(rec.indexOf("height")).toDouble();
+
+            qDebug() << "time is " << time
+                     << ". height is " << height;
     }
 }

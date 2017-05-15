@@ -94,6 +94,8 @@ private slots:
 
     void on_actionPERC_Time_Check_triggered();
 
+    void on_commandLine_returnPressed();
+
 private:
     Ui::MainWindow *ui;
 };
