@@ -72,6 +72,9 @@ void func::statMID_CEP(QVector<double> &Vector, double& resCEP, double& resMID)
     foreach(double var, Vector)
         summ+=var;
 
+    if(Vector.count()==0)
+        return;
+
     // Среднее арифметическое значение
     resMID=summ/Vector.count();
 
@@ -583,8 +586,13 @@ void func::Stat3D_Fix_Float(QTextBrowser *textBrowser, QVector<double> *X1, QVec
     Float = (double)X5->count();
     Other = (double)X1->count();
     Total = Fix + Float + Other;
+
     // Общее количество точек
-    textBrowser->append("Total points: "+ func::doubleToString(Total));
+    textBrowser->append("Total points: "+ QString::number(Total));
+
+    if(Total==0)
+        return;
+
     // Fix решений
     textBrowser->append("Fix points: "+doubleToString(Fix/Total*100)+"% ("+doubleToString(Fix)+")");
     // Float решений
@@ -643,8 +651,12 @@ void func::BLH_to_XYZ(QString GGA_String, double &X, double &Y, double &Z)
     double B=0., L=0., H=0.;
     func::GGA_BLH_Radians(GGA_String,B,L,H);
 
+    double p = 0.00669437999 * sin(B) * sin(B);
+    if(p >= 1. )
+        return;
+
     //Вычисление XYZ. Уточнить: Значение N можно вычислить 1 раз?
-    double N    = 6378137. / sqrt(1. - 0.00669437999 * sin(B) * sin(B));
+    double N    = 6378137. / sqrt(1. - p);
     X = (N + H) * cos(L) * cos(B);
     Y = (N + H) * sin(L) * cos(B);
     Z = ((1. - 0.00669437999) * N + H) * sin(B);
@@ -689,6 +701,10 @@ void func::GGA_R_b_R_l(QString GGA_Sting, double &R_b, double &R_l)
 
     // Вычисляем коэффициенты приращения
     double W = sqrt(1 - E_2 * b_fix * b_fix);
+
+    if(W==0)
+        return;
+
     R_b = Ae * (1. - E_2) / (W * W * W) + l_fix;
     R_l = (Ae / W + l_fix) * cos(b_fix);
 
@@ -879,7 +895,6 @@ void func::GGA_XYTime_0_Vectors(QString fileName, QVector<double> *X1, QVector<d
 
                       // Счетчик для валидных решений
                       i++;
-
                     }
                }
                inputFile.close();
@@ -920,7 +935,7 @@ void func::dbGGA_XYTime_0_Vectors(QString fileName, QString table_name, QVector<
                 dbase = QSqlDatabase::addDatabase("QSQLITE","dbConnection");
 
                 QString dbPath = QCoreApplication::applicationDirPath() + "/";
-                dbase.setDatabaseName(dbPath + "appDB.sqlite");
+                dbase.setDatabaseName(dbPath + ":memory:");
             }
 
             if (!dbase.open()) {
@@ -1088,7 +1103,7 @@ void func::dbGGA_2Files_Diff(QVector<double> *Time, QVector<double> *Diff)
         dbase = QSqlDatabase::addDatabase("QSQLITE","dbConnection");
 
         QString dbPath = QCoreApplication::applicationDirPath() + "/";
-        dbase.setDatabaseName(dbPath + "appDB.sqlite");
+        dbase.setDatabaseName(dbPath + ":memory:");
     }
 
     if (!dbase.open()) {
@@ -1219,10 +1234,9 @@ void func::Statistics(QString fileName, QTextBrowser *textBrowser)
     // Если имя не пустое то загружаем содержимое
     if (!fileName.isEmpty())
     {
-        // Очищаем Текст
-        textBrowser->setText("");
-        //Тест вывод имени файла
-        textBrowser->setText("File Name: "+fileName);
+        //Вывод имени файла
+        textBrowser->append("----------------------------------");
+        textBrowser->append("File Name: "+fileName);
 
         // Связываем переменную с физическим файлом
         QFile inputFile(fileName);
@@ -1248,6 +1262,8 @@ void func::Statistics(QString fileName, QTextBrowser *textBrowser)
            // Пока не достигнем конца файла читаем строчки
            while (!in.atEnd())
            {
+
+              i++; // Счетчик всех строк
               // Считываем строку
               QString line = in.readLine();
 
@@ -1313,6 +1329,7 @@ void func::Statistics(QString fileName, QTextBrowser *textBrowser)
                   pStatus = cStatus; // сохраняем как предыдущий статус НЗ
 
                   GGA_Total++;
+                  continue;
               }
 
               // Анализ RMC
@@ -1320,39 +1337,46 @@ void func::Statistics(QString fileName, QTextBrowser *textBrowser)
               {
                   //rmcFieldError++;
                   // badRMC.append(line);
+                  continue;
               }
-
-              i++;
             }
 
-            textBrowser->append("VER: "+ver);
-            textBrowser->append("Total Lines: "+func::doubleToString(i));
-            textBrowser->append("Total GGA: "+func::doubleToString(GGA_Total));
-            textBrowser->append("Valid GGA: "+func::doubleToString(GGA));
+            if(ver!="")
+                textBrowser->append("VER: "+ver);
+
+            textBrowser->append("Total Lines: "+ QString::number(i));
+            textBrowser->append("Total GGA: "+ QString::number(GGA_Total));
+            textBrowser->append("Valid GGA: "+ QString::number(GGA));
+
+            if(GGA==0)
+            {
+                textBrowser->append("No GGA messages");
+                return;
+            }
 
             // Количество NA решений
-            textBrowser->append("NA count: "+func::doubleToString(Status_NA)+" ("+func::doubleToString((double)Status_NA/(double)GGA*100)+"%)");
+            textBrowser->append("NA count: "+ QString::number(Status_NA)+" ("+func::doubleToString((double)Status_NA/(double)GGA*100)+"%)");
 
             // Количество 3D решений
-            textBrowser->append("3D count: "+func::doubleToString(Status_3D)+" ("+func::doubleToString((double)Status_3D/(double)GGA*100)+"%)");
+            textBrowser->append("3D count: "+ QString::number(Status_3D)+" ("+func::doubleToString((double)Status_3D/(double)GGA*100)+"%)");
 
             // Количество 3D Diff
-            textBrowser->append("3D Diff count: "+func::doubleToString(Status_3D_Diff)+" ("+func::doubleToString((double)Status_3D_Diff/(double)GGA*100)+"%)");
+            textBrowser->append("3D Diff count: "+ QString::number(Status_3D_Diff)+" ("+func::doubleToString((double)Status_3D_Diff/(double)GGA*100)+"%)");
 
             // Количество Float
-            textBrowser->append("Float count: "+func::doubleToString(Status_Float)+" ("+func::doubleToString((double)Status_Float/(double)GGA*100)+"%)");
+            textBrowser->append("Float count: "+ QString::number(Status_Float)+" ("+func::doubleToString((double)Status_Float/(double)GGA*100)+"%)");
 
             // Количество Fix
-            textBrowser->append("Fix count: "+func::doubleToString(Status_Fix)+" ("+func::doubleToString((double)Status_Fix/(double)GGA*100)+"%)");
+            textBrowser->append("Fix count: "+ QString::number(Status_Fix)+" ("+func::doubleToString((double)Status_Fix/(double)GGA*100)+"%)");
 
             // Количество переходов Float-Fix
-            textBrowser->append("Float to Fix count: "+func::doubleToString(Float2Fix)+" ("+func::doubleToString((double)Float2Fix/(double)GGA*100)+"%)");
+            textBrowser->append("Float to Fix count: "+ QString::number(Float2Fix)+" ("+func::doubleToString((double)Float2Fix/(double)GGA*100)+"%)");
 
             // Количество переходов Fix-X (любое состояние)
-            textBrowser->append("Fix to not Fix count: "+func::doubleToString(Fix2X)+" ("+func::doubleToString((double)Fix2X/(double)GGA*100)+"%)");
+            textBrowser->append("Fix to not Fix count: "+ QString::number(Fix2X)+" ("+func::doubleToString((double)Fix2X/(double)GGA*100)+"%)");
 
             // Количество скачков >10 м
-            textBrowser->append("Jump count: "+func::doubleToString(jump)+" ("+func::doubleToString((double)jump/(double)GGA*100)+"%)");
+            textBrowser->append("Jump count (>10m): "+ QString::number(jump) +" ("+func::doubleToString((double)jump/(double)GGA*100)+"%)");
 
         }
     }
