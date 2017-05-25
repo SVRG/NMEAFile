@@ -35,6 +35,8 @@ public:
     static void GGA_2Files_Diff_900(QString fileName1, QString fileName2, QVector<double> *X1, QVector<double> *Y1, QVector<double> *X2, QVector<double> *Y2);
     static void GGA_to_3D_Fix_Float(QStringList nmea, double X, double Y, QVector<double> *X1, QVector<double> *Y1, QVector<double> *X4, QVector<double> *Y4, QVector<double> *X5, QVector<double> *Y5);
     static double GGA_2Point_Diff(QString GGA_Line1, QString GGA_Line2);
+    static QString getGGAfromLine(QString line);
+
 
     static void PERC_Time_Vectors(QString fileName, QVector<double> *X1, QVector<double> *Y1);
 

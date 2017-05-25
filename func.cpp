@@ -1272,10 +1272,12 @@ void func::Statistics(QString fileName, QTextBrowser *textBrowser)
                   if(!ver.contains(line))
                         ver += line+"\n";
 
+              QString gga = func::getGGAfromLine(line);
+
               // Анализ GGA
-              if(func::GGA_Check(line))
+              if(func::GGA_Check(gga))
               {
-                  cStatus = line.split(',')[6]; // Текущий статус НЗ
+                  cStatus = gga.split(',')[6]; // Текущий статус НЗ
 
                   // Case Status
                   switch ( cStatus.toInt() ) {
@@ -1319,11 +1321,11 @@ void func::Statistics(QString fileName, QTextBrowser *textBrowser)
                       // Скачки по координатам
                       if(pLine!="")
                       {
-                          if(func::GGA_2Point_Diff(line,pLine)>4)
+                          if(func::GGA_2Point_Diff(gga,pLine)>4)
                               jump++;
                       }
 
-                      pLine=line;
+                      pLine=gga;
                   }
 
                   pStatus = cStatus; // сохраняем как предыдущий статус НЗ
@@ -1333,12 +1335,13 @@ void func::Statistics(QString fileName, QTextBrowser *textBrowser)
               }
 
               // Анализ RMC
-              if(line.contains("RMC") and line.split(',').count()!=13)
+              /*if(line.contains("RMC") and line.split(',').count()!=13)
               {
                   //rmcFieldError++;
                   // badRMC.append(line);
                   continue;
               }
+              */
             }
 
             if(ver!="")
@@ -1354,6 +1357,14 @@ void func::Statistics(QString fileName, QTextBrowser *textBrowser)
                 return;
             }
 
+            double fix_proc = (double)Status_Fix/(double)GGA*100;
+
+            QString color = "<font color=\"orange\">";
+            if(fix_proc>95)
+                color = "<font color=\"green\">";
+            else if(fix_proc<50)
+                color = "<font color=\"red\">";
+
             // Количество NA решений
             textBrowser->append("NA count: "+ QString::number(Status_NA)+" ("+func::doubleToString((double)Status_NA/(double)GGA*100)+"%)");
 
@@ -1367,7 +1378,7 @@ void func::Statistics(QString fileName, QTextBrowser *textBrowser)
             textBrowser->append("Float count: "+ QString::number(Status_Float)+" ("+func::doubleToString((double)Status_Float/(double)GGA*100)+"%)");
 
             // Количество Fix
-            textBrowser->append("Fix count: "+ QString::number(Status_Fix)+" ("+func::doubleToString((double)Status_Fix/(double)GGA*100)+"%)");
+            textBrowser->append(color+"<b>Fix count: "+ QString::number(Status_Fix)+" ("+func::doubleToString((double)Status_Fix/(double)GGA*100)+"%)</b></font>");
 
             // Количество переходов Float-Fix
             textBrowser->append("Float to Fix count: "+ QString::number(Float2Fix)+" ("+func::doubleToString((double)Float2Fix/(double)GGA*100)+"%)");
@@ -1383,6 +1394,7 @@ void func::Statistics(QString fileName, QTextBrowser *textBrowser)
 }
 //---------------------------------------------------------------
 // Расстояние между двумя точками 3D
+// GGA_Line1 - первая точка, GGA_Line2 - вторая точка
 double func::GGA_2Point_Diff(QString GGA_Line1, QString GGA_Line2)
 {
     double X=0, Y=0, Z=0, X0=0, Y0=0, Z0=0;
@@ -1763,4 +1775,24 @@ void func::getDataFromDB()
             qDebug() << "time is " << time
                      << ". height is " << height;
     }
+}
+//----------------------------------------------------------------------------------------------------------------
+// GGA - получение подстроки GGA из строки NMEA+DBG
+QString func::getGGAfromLine(QString line)
+{
+    QString gga = "";
+
+    int gga_start_index = line.indexOf("GGA",2)-3;
+    if(gga_start_index<0)
+        return "";
+
+    int gga_end_index = line.indexOf("*",gga_start_index)+3;
+    if(gga_end_index<0 or gga_end_index<gga_start_index)
+        return "";
+
+    gga = line.mid(gga_start_index,gga_end_index-gga_start_index);
+
+    //qDebug() << gga;
+
+    return(gga);
 }
