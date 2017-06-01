@@ -1359,11 +1359,11 @@ void func::Statistics(QString fileName, QTextBrowser *textBrowser)
 
             double fix_proc = (double)Status_Fix/(double)GGA*100;
 
-            QString color = "<font color=\"orange\">";
+            QString color = "<font color=\"orange\">"; // цвет строки со статистикой Fix решений. оранжевый - если >=50% и <=95%
             if(fix_proc>95)
-                color = "<font color=\"green\">";
+                color = "<font color=\"green\">"; // зеленый - если >95%
             else if(fix_proc<50)
-                color = "<font color=\"red\">";
+                color = "<font color=\"red\">"; // красный - если <50%
 
             // Количество NA решений
             textBrowser->append("NA count: "+ QString::number(Status_NA)+" ("+func::doubleToString((double)Status_NA/(double)GGA*100)+"%)");
