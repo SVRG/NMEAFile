@@ -232,12 +232,7 @@ void MainWindow::on_actionNAV_Param_triggered()
 
                   // Если решение невалидное - пропускаем
                   if(nmea[6]=="0")
-                  {
-                      valid=false; // Если невалидное то ставим флаг. Нужно чтобы не копить лишние суммы С/Ш
                       continue;
-                  }
-
-                  valid = true;
 
                   // Кол-во используемых спутников [7]
                   double Sat = nmea[7].toDouble();
@@ -658,17 +653,20 @@ void MainWindow::on_actionBSS_Distance_triggered()
               //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
               if(func::GGA_Check(line))
                   {
-                  QStringList nmea = line.split(',');
-                  type = nmea[6];
+                      QStringList nmea = line.split(',');
+                      type = nmea[6];
 
-                  curr_time = func::TimeToSeconds(nmea[1]);
-                  if(curr_time<pred_time) // Следующий день
-                    day++;
+                      if(type=="0")
+                          continue;
 
-                  pred_time = curr_time;
+                      curr_time = func::TimeToSeconds(nmea[1]);
+                      if(curr_time<pred_time) // Следующий день
+                        day++;
 
-                  time = func::TimeToQDateTime(nmea[1], day);
-                  continue;
+                      pred_time = curr_time;
+
+                      time = func::TimeToQDateTime(nmea[1], day);
+                      continue;
                   }// if GGA
 
 
@@ -1042,6 +1040,9 @@ void MainWindow::on_actionBLS_triggered()
 
               // Тип решения
               QString type = nmea[8];
+
+              if(type=="N")
+                  continue;
 
               // Курс
               double course = QString(nmea[6]).toDouble();
@@ -1423,6 +1424,9 @@ void MainWindow::on_actionBLS_Course_Difference_triggered()
 
               // Тип решения
               QString type = nmea[8];
+
+              if(type=="N")
+                  continue;
 
               // Курс
               double course = QString(nmea[6]).toDouble();
@@ -2320,6 +2324,9 @@ void MainWindow::on_actionRZD_RMS_Error_triggered()
                   QStringList nmea = line.split(',');
                   type = nmea[6];
 
+                  if(type==0)
+                      continue;
+
                   curr_time = func::TimeToSeconds(nmea[1]);
                   if(curr_time<pred_time) // Следующий день
                     day++;
@@ -2330,10 +2337,6 @@ void MainWindow::on_actionRZD_RMS_Error_triggered()
 
                   continue;
               }
-
-
-              if(type=="" or type=="0" or time<0)
-                  continue;
 
               // Если строка содежит RZD
               // $PNVGRZD,A,0.010*2D or (Z410 - РЖД) $PORZD,A,1.1,0.03*0D
