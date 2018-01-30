@@ -96,6 +96,8 @@ private slots:
 
     void on_commandLine_returnPressed();
 
+    void on_actionGGA_Distance_triggered();
+
 private:
     Ui::MainWindow *ui;
 };
