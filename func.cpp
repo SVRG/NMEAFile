@@ -238,7 +238,7 @@ void func::GGA_XY_Vectors(QString fileName, QVector<double> *X1, QVector<double>
                   // Если строка содежит GGA
                   // $GPGGA,113448.601,5452.3307572,N,08258.7870772,E,1,17,0.8,160.927,M,    ,M  ,0.6,  *6F
                   //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
-                  if(func::GGA_Check(line) or line.contains("TMC")) // Ищем строку GGA или TMC
+                  if(func::GGA_Check(line)) // Ищем строку GGA или TMC
                   {
 
                       // Разбиваем строку по запятой
@@ -327,7 +327,7 @@ void func::GGA_Time_Vectors(QString fileName, QVector<double> *X1, QVector<doubl
               // Если строка содежит GGA
               // $GPGGA,113448.601,5452.3307572,N,08258.7870772,E,1,17,0.8,160.927,M,    ,M  ,0.6,  *6F
               //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
-              if(func::GGA_Check(line) or line.contains("TMC")) // Ищем строку GGA / TMC
+              if(func::GGA_Check(line)) // Ищем строку GGA / TMC
               {
 
                   // Разбиваем строку по запятой
@@ -384,7 +384,7 @@ void func::GGA_DiffTime_Vectors(QString fileName, QVector<double> *X1, QVector<d
               // Если строка содежит GGA
               // $GPGGA,113448.601,5452.3307572,N,08258.7870772,E,1,17,0.8,160.927,M,    ,M  ,0.6,  *6F
               //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
-              if(func::GGA_Check(line) or line.contains("TMC")) // Ищем строку GGA
+              if(func::GGA_Check(line)) // Ищем строку GGA
               {
 
                   // Разбиваем строку по запятой
@@ -448,7 +448,7 @@ void func::GGA_Altitude_Vectors(QString fileName, QVector<double> *X1, QVector<d
               // Если строка содежит GGA
               // $GPGGA,093013.20,5544.5527978,N,03731.3594562,E,4,16,0.7,174.254,M,14.760,M,1.2,0002*46
               //    0        1           2     3      4        5 6  7  8    9     10   11  12 13  14
-              if(func::GGA_Check(line) or line.contains("TMC")) // Ищем строку GGA
+              if(func::GGA_Check(line)) // Ищем строку GGA
               {
 
                   // Разбиваем строку по запятой
@@ -780,17 +780,22 @@ void func::GGA_XY_0_Vectors(QString fileName, QVector<double> *X1, QVector<doubl
 }
 }
 //----------------------------------------------------------------------------------------------------------------
-// GGA - проверка
-bool func::GGA_Check(QString GGA_String)
+// GGA - выделение из строки (если присутствуют бинарные данные) и проверка
+bool func::GGA_Check(QString &GGA_String)
 {
-    if(GGA_String.contains("GGA")) // Ищем строку GGA
-    if(GGA_String.split('*').count()==2) // Проверяем, что есть контрольная сумма
-    if(GGA_String.split(',').count()==15 and (GGA_String.split('*')[1]==func::CRC(GGA_String))) // Проверка на количество полей, Проверка контрольной суммы
-        return(true);
-return(false);
+    if(GGA_String.contains("GGA") or GGA_String.contains("TMC"))
+    { // Ищем строку GGA или TMC
+        GGA_String = func::getGGAfromLine(GGA_String);
+        if(GGA_String.split('*').count()==2) // Проверяем, что есть контрольная сумма
+            if(GGA_String.split(',').count()==15 and (GGA_String.split('*')[1]==func::CRC(GGA_String))) // Проверка на количество полей, Проверка контрольной суммы
+                return(true);
+    }
+
+    return(false);
 }
 //----------------------------------------------------------------------------------------------------------------
-// GGA - темп. Проверяем темп по файлу. Пока не корректно работает! Переделать. Надо ввести критерий достоверности, например чтобы количество с одним значением преобладало (на 51%)
+// GGA - темп. Проверяем темп по файлу.
+// todo - Пока не корректно работает! Переделать. Надо ввести критерий достоверности, например чтобы количество с одним значением преобладало (на 51%)
 // Предполагается использовать при поиске ближайшего времени
 int func::GGA_Temp(QTextStream *in)
 {
@@ -1037,7 +1042,7 @@ void func::dbGGA_XYTime_0_Vectors(QString fileName, QString table_name, QVector<
 
             dbase.commit(); // Конец транзакции
             inputFile.close();
-            qDebug() << "Вставлено: " << i;
+            // qDebug() << "Вставлено: " << i;
         }
     }
 }
@@ -1268,9 +1273,10 @@ void func::Statistics(QString fileName, QTextBrowser *textBrowser)
               QString line = in.readLine();
 
               // Ищем версию
+              if(ver=="")
               if(line.contains("VER"))
-                  if(!ver.contains(line))
-                        ver += line+"\n";
+                  if(ver != func::getNMEAfromLine(line,"VER"))
+                        ver = func::getNMEAfromLine(line,"VER")+"\n";
 
               QString gga = func::getGGAfromLine(line);
 
@@ -1404,6 +1410,21 @@ double func::GGA_2Point_Diff(QString GGA_Line1, QString GGA_Line2)
 
     // Вычисляем расстояние между точками
     double diffXYZ = sqrt((X-X0)*(X-X0)+(Y-Y0)*(Y-Y0)+(Z-Z0)*(Z-Z0));
+
+    return diffXYZ;
+}
+//----------------------------------------------------------------
+// Расстояние между двумя точками 2D
+// GGA_Line1 - первая точка, GGA_Line2 - вторая точка
+double func::GGA_2Point_2D_Diff(QString GGA_Line1, QString GGA_Line2)
+{
+    double X=0, Y=0, Z=0, X0=0, Y0=0, Z0=0;
+
+    func::BLH_to_XYZ(GGA_Line1,X0,Y0,Z0);
+    func::BLH_to_XYZ(GGA_Line2,X,Y,Z);
+
+    // Вычисляем расстояние между точками
+    double diffXYZ = sqrt((X-X0)*(X-X0)+(Y-Y0)*(Y-Y0));
 
     return diffXYZ;
 }
@@ -1720,7 +1741,7 @@ void func::loadFileToDB(QString fileName)
                   // Если строка содежит GGA
                   // $GPGGA,113448.601,5452.3307572,N,08258.7870772,E,1,17,0.8,160.927,M,    ,M  ,0.6,  *6F
                   //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
-                  if(line.contains("GGA"))
+                  if(func::GGA_Check(line))
                   {
 
                       // Разбиваем строку по запятой
@@ -1795,4 +1816,25 @@ QString func::getGGAfromLine(QString line)
     //qDebug() << gga;
 
     return(gga);
+}
+//----------------------------------------------------------------------------------------------------------------
+// GGA - получение подстроки GGA из строки NMEA+DBG
+QString func::getNMEAfromLine(QString line, QString MessID)
+{
+    QString nmea = "";
+
+    int nmea_start_index = line.indexOf(MessID,2)-3;
+    if(nmea_start_index<0)
+        return "";
+
+    int nmea_end_index = line.indexOf("*",nmea_start_index)+3;
+
+    if(nmea_end_index<0 or nmea_end_index<nmea_start_index)
+        return "";
+
+    nmea = line.mid(nmea_start_index,nmea_end_index-nmea_start_index);
+
+    //qDebug() << gga;
+
+    return(nmea);
 }
