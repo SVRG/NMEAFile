@@ -22,7 +22,7 @@ QStringList fileNames; // Список файлов
 QString default_dir = "/Users/svrg/Downloads"; // Папка по умолчанию
 
 QString referencePointGGA = "$GPGGA,040148.40,5544.5523183,N,03731.3598778,E,4,14,0.7,174.288,M,14.760,M,0.4,0017*4C"; // Эталонная строка координат, по умолчанию Кабель 1.
-QString referencePointGGA1 = "$GPGGA,040148.40,5544.5523183,N,03731.3598778,E,4,14,0.7,174.288,M,14.760,M,0.4,0017*4C"; // Эталонная строка координат Кабель 1.
+QString referencePointGGA1 = referencePointGGA; // Эталонная строка координат Кабель 1.
 QString referencePointGGA2 =  "$GPGGA,190747.00,5544.5518312,N,03731.3602986,E,4,15,0.7,174.286,M,14.760,M,1.0,0017*4A";  // Эталонная строка координат Кабель 2
 
 
@@ -98,16 +98,22 @@ void MainWindow::on_actionOpen_File_triggered()
 }
 
 // ------------------------------------------------------------------------------------------------------
-// Подгоняем размер под график---------------------------------------------------------------------------
+// Масштабирование по X
 void MainWindow::on_actionScale_triggered()
 {
-    if(ui->customPlot->graphCount()>0)
+    int cnt = ui->customPlot->graphCount(), cnt_max = 0;
+    if(cnt>0)
     {
-        ui->customPlot->graph(0)->rescaleKeyAxis();
+        for(int i=0;i<cnt;i++)
+        {
 
-        for(int i=1;i<ui->customPlot->graphCount();i++)
-            ui->customPlot->graph(i)->rescaleKeyAxis(true); // same thing for graph 1, but only enlarge ranges (in case graph 1 is smaller than graph 0):
-
+            if(ui->customPlot->graph(i)->data()->count() > cnt_max)
+            {
+                ui->customPlot->graph(i)->rescaleKeyAxis(false);
+                cnt_max = ui->customPlot->graph(i)->data()->count();
+            }
+            // qDebug() << i;
+        }
         ui->customPlot->replot();
     }
     else
@@ -120,12 +126,11 @@ void MainWindow::on_actionScale_triggered()
 // Масштабирование по Y
 void MainWindow::on_actionScale_Y_triggered()
 {
-    if(ui->customPlot->graphCount()>0)
+    int cnt = ui->customPlot->graphCount();
+    if(cnt>0)
     {
-        ui->customPlot->graph(0)->rescaleValueAxis();
-
-        for(int i=1;i<ui->customPlot->graphCount();i++)
-            ui->customPlot->graph(i)->rescaleValueAxis(true); // same thing for graph 1, but only enlarge ranges (in case graph 1 is smaller than graph 0):
+        for(int i=0;i<ui->customPlot->graphCount();i++)
+            ui->customPlot->graph(i)->rescaleValueAxis(false);
 
         ui->customPlot->replot();
     }
@@ -222,10 +227,8 @@ void MainWindow::on_actionNAV_Param_triggered()
           // Если строка содежит GGA
           // $GPGGA,113448.601,5452.3307572,N,08258.7870772,E,1,17,0.8,160.927,M,    ,M  ,0.6,  *6F
           //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
-          if(line.contains("GGA")) // Ищем строку GGA
-          if(line.split('*').count()==2) // проверяем, что есть контрольная сумма
-          if(line.split(',').count()==15 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
-            {
+          if(func::GGA_Check(line)) // Ищем строку GGA
+          {
 
                   // Разбиваем строку по запятой
                   QStringList nmea = line.split(',');
@@ -346,10 +349,8 @@ void MainWindow::on_actionErrors_triggered()
               // Если строка содежит GGA
               // $GPGGA,113448.601,5452.3307572,N,08258.7870772,E,1,17,0.8,160.927,M,    ,M  ,0.6,  *6F
               //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
-              if(line.contains("GGA")) // Ищем строку GGA
-              if(line.split('*').count()==2) // Проверяем, что есть контрольная сумма
-              if(line.split(',').count()==15 and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
-                {
+              if(func::GGA_Check(line)) // Ищем строку GGA
+              {
                       // Разбиваем строку по запятой
                       QStringList nmea = line.split(',');
 
@@ -800,10 +801,8 @@ void MainWindow::on_actionGGA_Diff_Age_triggered()
           // Если строка содежит GGA
           // $GPGGA,113448.601,5452.3307572,N,08258.7870772,E,1,17,0.8,160.927,M,    ,M  ,0.6,  *6F
           //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
-          if(line.contains("GGA")) // Ищем строку GGA
-          if(line.split('*').count()==2) // и проверяем, что есть контрольная сумма
-          if(line.split(',').count()==15)// and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
-            {
+          if(func::GGA_Check(line))
+          {
               // Разбиваем строку по запятой
               QStringList nmea = line.split(',');
 
@@ -1173,9 +1172,8 @@ void MainWindow::on_actionBSS_Total_Valid_triggered()
               // Если строка содежит GGA - Запоминаем тип решения
               // $GPGGA,113448.601,5452.3307572,N,08258.7870772,E,1,17,0.8,160.927,M,    ,M  ,0.6,  *6F
               //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
-              if(line.contains("GGA") and line.split('*').count()==2) // Ищем строку GGA и проверяем, что есть контрольная сумма
-              if(line.split(',').count()==15)// and (line.split('*')[1]==func::CRC(line))) // Проверка на количество полей, Проверка контрольной суммы
-                  {
+              if(func::GGA_Check(line))
+              {
                     QStringList nmea = line.split(',');
                     type = nmea[6];
 
@@ -1554,6 +1552,7 @@ void MainWindow::on_actionFind_Errors_triggered()
 
            QString timeP=""; // Предыдущее время
            QString badCRCstr = "";
+           QString ERR = "";
 
            // Пока не достигнем конца файла читаем строчки
            while (!in.atEnd()) {
@@ -1579,6 +1578,14 @@ void MainWindow::on_actionFind_Errors_triggered()
               if(!line.contains('*'))
               {
                   noCRC++;
+                  //ui->textBrowser->append(line);
+                  continue;
+              }
+
+              // Поле ERR
+              if(line.contains("ERR"))
+              {
+                  ERR+=line+ "\n";
                   //ui->textBrowser->append(line);
                   continue;
               }
@@ -1625,7 +1632,6 @@ void MainWindow::on_actionFind_Errors_triggered()
 
                   timeP=nmea[1];
 
-
               }
 
               // Не совпадает количество полей
@@ -1647,6 +1653,10 @@ void MainWindow::on_actionFind_Errors_triggered()
         ui->textBrowser->append(delim);
 
         ui->textBrowser->append("No CRC: "+QString::number(noCRC));
+        ui->textBrowser->append(delim);
+
+        ui->textBrowser->append("ERR Messages: ");
+        ui->textBrowser->append(ERR);
         ui->textBrowser->append(delim);
 
         ui->textBrowser->append("Low count (<5): "+QString::number(lowCount));
@@ -1957,7 +1967,7 @@ void MainWindow::on_actionCreate_CSV_triggered()
               // Если строка содежит GGA
               // $GPGGA,113448.601,5452.3307572,N,08258.7870772,E,1,17,0.8,160.927,M,    ,M  ,0.6,  *6F
               //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
-              if((line.contains("GGA") or line.contains("TMC")) and (nmea.count()==15)) // Ищем строку GGA
+              if(func::GGA_Check(line))
               {
                     // Если данные не достоверны - пропускаем
                     if(nmea[6]=="0")
@@ -2094,7 +2104,7 @@ void MainWindow::on_ButtonBLH2XYZ_clicked()
 
         if(line2.contains("GGA") or line2.contains("TMC"))
         {
-            if(func::GGA_Check(line2) or func::CRC_Check(line2))
+            if(func::GGA_Check(line2))
             {
                 func::BLH_to_XYZ(line2,X1,Y1,Z1);
 
@@ -3051,4 +3061,131 @@ void MainWindow::on_commandLine_returnPressed()
             }
     }
 
+}
+//----------------------------------------------------------------------------------------
+// GGA - Пройденное расстояние
+void MainWindow::on_actionGGA_Distance_triggered()
+{
+    graphName = "Distance";
+
+    // Если fileName пустой - открыть Диалог.
+    if(fileName.isEmpty())
+        MainWindow::on_actionOpen_File_triggered();
+
+    // Если имя не пустое то загружаем содержимое
+    if (!fileName.isEmpty())
+    {
+        //Тест вывод имени файла
+        ui->textBrowser->setText("File Name: "+fileName);
+
+        // Связываем переменную с физическим файлом
+        QFile inputFile(fileName);
+        // Если все ОК то открываем файл
+        if (inputFile.open(QIODevice::ReadOnly))
+        {
+           QTextStream in(&inputFile);
+
+           // Массивы расстояний в режимах 3D, RTK, Float
+           QVector<double> distXY1, timeXY1, distXY4, timeXY4, distXY5, timeXY5;
+
+           // Счетчик. Используется для Тестов.
+           int i=0;
+           int day = 0;
+           double pred_time = -1, curr_time=0;
+           double distance=0;
+
+           QString pLine = ""; // Предыдущая строка GGA
+
+           // Пока не достигнем конца файла читаем строчки
+           while (!in.atEnd()) {
+              // Считываем строку
+              QString line = in.readLine();
+
+              // Если строка содежит GGA
+              // $GPGGA,113448.601,5452.3307572,N,08258.7870772,E,1,17,0.8,160.927,M,    ,M  ,0.6,  *6F
+              //    0        1           2      3      4        5 6  7  8    9     10 11  12   13  14
+              if(func::GGA_Check(line)) // Ищем строку GGA
+              {
+                      // Разбиваем строку по запятой
+                      QStringList nmea = line.split(',');
+
+                      // Если решение невалидное - пропускаем
+                      if(nmea[6]=="0")
+                          continue;
+
+                      // Вычисляем разницу между текущей и предыдущей координатой
+                      if(i>0)
+                      {
+
+                          // Вычисляем расстояние между точками
+                          if(pLine!="")
+                                distance += func::GGA_2Point_Diff(line, pLine);
+
+                          pLine = line;
+
+                          curr_time = func::TimeToSeconds(nmea[1]);
+
+                          if(curr_time<pred_time) // Следующий день
+                            day++;
+
+                          pred_time = curr_time;
+
+                          double time = func::TimeToQDateTime(nmea[1], day);
+
+                           // Разбиваем данные по типу решения
+                           // Если тип решения RTK Fix
+                           if(nmea[6]=="4")
+                           {
+                                distXY4.append(distance);
+                                timeXY4.append(time);
+                           }
+                           // RTK Float
+                           else if (nmea[6]=="5") {
+                               distXY5.append(distance);
+                               timeXY5.append(time);
+                           }
+                           else
+                           // Остальные - 3D/3D Diff/DR ...
+                           {
+                               distXY1.append(distance);
+                               timeXY1.append(time);
+                           }
+
+                      }
+                    // Счетчик для индекса значений
+                    i++;
+                }// if GGA
+
+           } //while
+           inputFile.close();
+
+           if(distXY1.count()>0 || distXY4.count()>0 || distXY5.count()>0)
+           {
+               // diffXY Graph
+               ui->customPlot->clearGraphs();
+
+               // 3D...
+               func::drawGraph3D_Fix_Float_Time(ui->customPlot,timeXY1,distXY1,timeXY4,distXY4,timeXY5,distXY5);
+               ui->textBrowser->append("GGA Distance: " + func::doubleToString(distance));
+           }
+           else
+           {
+               ui->textBrowser->append("No GGA Data");
+               ui->tabWidget->setCurrentIndex(1); // Переходим на вкладку Stat
+           }
+
+        }
+
+        else
+        {
+            ui->textBrowser->append("Open File Error");
+            ui->tabWidget->setCurrentIndex(1); // Переходим на вкладку Stat
+        }
+
+    }
+    else
+    {
+        ui->textBrowser->append("File Name is Empty");
+        ui->tabWidget->setCurrentIndex(1); // Переходим на вкладку Stat
+    }
 }
