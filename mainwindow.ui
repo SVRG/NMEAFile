@@ -304,6 +304,7 @@
     <addaction name="actionGGA_Position"/>
     <addaction name="actionNAV_Param"/>
     <addaction name="actionErrors"/>
+    <addaction name="actionGGA_Distance"/>
     <addaction name="actionGGA_Diff_Age"/>
     <addaction name="actionGGA_Time_Check"/>
     <addaction name="actionGGA_Diff_Time_Check"/>
@@ -526,6 +527,11 @@
   <action name="actionPERC_Time_Check">
    <property name="text">
     <string>PERC Time Check</string>
+   </property>
+  </action>
+  <action name="actionGGA_Distance">
+   <property name="text">
+    <string>GGA Distance</string>
    </property>
   </action>
  </widget>
