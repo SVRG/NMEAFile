@@ -25,6 +25,7 @@ QString referencePointGGA = "$GPGGA,040148.40,5544.5523183,N,03731.3598778,E,4,1
 QString referencePointGGA1 = referencePointGGA; // Эталонная строка координат Кабель 1.
 QString referencePointGGA2 =  "$GPGGA,190747.00,5544.5518312,N,03731.3602986,E,4,15,0.7,174.286,M,14.760,M,1.0,0017*4A";  // Эталонная строка координат Кабель 2
 
+bool days = true; // Учитывать переход дня
 
 QString fileTypes = "NMEA LOG-Files (*.nme *.log *.txt *.gpx);;All Files (*)"; // Типы файлов
 
@@ -242,7 +243,7 @@ void MainWindow::on_actionNAV_Param_triggered()
 
                   curr_time = func::TimeToSeconds(nmea[1]);
 
-                  if(curr_time<pred_time) // Следующий день
+                  if(curr_time<pred_time and days) // Следующий день
                     day++;
                   pred_time = curr_time;
 
@@ -372,7 +373,7 @@ void MainWindow::on_actionErrors_triggered()
 
                           curr_time = func::TimeToSeconds(nmea[1]);
 
-                          if(curr_time<pred_time) // Следующий день
+                          if(curr_time<pred_time and days) // Следующий день
                             day++;
 
                           pred_time = curr_time;
@@ -499,7 +500,7 @@ void MainWindow::on_actionRMC_triggered()
               double course=(QString(nmea[8]).toDouble())/10; // Курс [8]
 
               curr_time = func::TimeToSeconds(nmea[1]);
-              if(curr_time<pred_time) // Следующий день
+              if(curr_time<pred_time and days) // Следующий день
                 day++;
 
               pred_time = curr_time;
@@ -661,7 +662,7 @@ void MainWindow::on_actionBSS_Distance_triggered()
                           continue;
 
                       curr_time = func::TimeToSeconds(nmea[1]);
-                      if(curr_time<pred_time) // Следующий день
+                      if(curr_time<pred_time and days) // Следующий день
                         day++;
 
                       pred_time = curr_time;
@@ -813,7 +814,7 @@ void MainWindow::on_actionGGA_Diff_Age_triggered()
               double diffAge = nmea[13].toDouble();
 
               curr_time = func::TimeToSeconds(nmea[1]);
-              if(curr_time<pred_time) // Следующий день
+              if(curr_time<pred_time and days) // Следующий день
                 day++;
 
               if(diffAge>10 and curr_time!=0) // !ToDo - надо как то защититься от разницы 0-24ч
@@ -1049,7 +1050,7 @@ void MainWindow::on_actionBLS_triggered()
               // Время
               curr_time = func::TimeToSeconds(nmea[1]);
 
-              if(curr_time<pred_time) // Следующий день
+              if(curr_time<pred_time and days) // Следующий день
                 day++;
               pred_time = curr_time;
 
@@ -1181,7 +1182,7 @@ void MainWindow::on_actionBSS_Total_Valid_triggered()
                         continue;
 
                     curr_time = func::TimeToSeconds(nmea[1]);
-                    if(curr_time<pred_time) // Следующий день
+                    if(curr_time<pred_time and days) // Следующий день
                       day++;
 
                     pred_time = curr_time;
@@ -1434,7 +1435,7 @@ void MainWindow::on_actionBLS_Course_Difference_triggered()
 
               curr_time = func::TimeToSeconds(nmea[1]);
 
-              if(curr_time<pred_time) // Следующий день
+              if(curr_time<pred_time and days) // Следующий день
                 day++;
               pred_time = curr_time;
 
@@ -2338,7 +2339,7 @@ void MainWindow::on_actionRZD_RMS_Error_triggered()
                       continue;
 
                   curr_time = func::TimeToSeconds(nmea[1]);
-                  if(curr_time<pred_time) // Следующий день
+                  if(curr_time<pred_time and days) // Следующий день
                     day++;
 
                   pred_time = curr_time;
@@ -2496,8 +2497,11 @@ void MainWindow::on_actionGGA_Ref_Point_Diff_triggered()
 
                   curr_time = func::TimeToSeconds(nmea[1]);
 
-                  if(curr_time<pred_time) // Следующий день
-                    day++;
+                  if(curr_time<pred_time and days) // Следующий день // todo - придумать защиту от скачков времени, может использовать дату из RMC
+                    {
+                      day++;
+                      //ui->textBrowser->append(nmea[1]);
+                  }
                   pred_time = curr_time;
 
                   time = func::TimeToQDateTime(nmea[1],day);
@@ -2842,7 +2846,7 @@ void MainWindow::on_actionSDP_Standard_Deviation_triggered()
                       continue;
 
                   curr_time = func::TimeToSeconds(nmea[1]);
-                  if(curr_time<pred_time) // Следующий день
+                  if(curr_time<pred_time and days) // Следующий день
                     day++;
 
                   pred_time = curr_time;
@@ -3041,6 +3045,13 @@ void MainWindow::on_commandLine_returnPressed()
             else
                 qDebug() << "Err comandLine count";
             }
+        else if(command.contains("days"))
+        {
+            if(command.contains("off"))
+                days = false;
+            else
+                days = true;
+        }
     }
 
     if(command.contains("get")) // Запрос
@@ -3058,6 +3069,14 @@ void MainWindow::on_commandLine_returnPressed()
         if(command.contains("refpoint"))
             {
                 ui->textBrowser->append(referencePointGGA);
+            }
+        else
+            if(command.contains("days"))
+            {
+                if(days)
+                    ui->textBrowser->append("days on");
+                else
+                    ui->textBrowser->append("days off");
             }
     }
 
@@ -3125,7 +3144,7 @@ void MainWindow::on_actionGGA_Distance_triggered()
 
                           curr_time = func::TimeToSeconds(nmea[1]);
 
-                          if(curr_time<pred_time) // Следующий день
+                          if(curr_time<pred_time and days) // Следующий день
                             day++;
 
                           pred_time = curr_time;
