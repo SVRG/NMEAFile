@@ -98,6 +98,8 @@ private slots:
 
     void on_actionGGA_Distance_triggered();
 
+    void on_actionDBG_Ratio_triggered();
+
 private:
     Ui::MainWindow *ui;
 };

@@ -26,6 +26,7 @@ QString referencePointGGA1 = referencePointGGA; // Эталонная строк
 QString referencePointGGA2 =  "$GPGGA,190747.00,5544.5518312,N,03731.3602986,E,4,15,0.7,174.286,M,14.760,M,1.0,0017*4A";  // Эталонная строка координат Кабель 2
 
 bool days = true; // Учитывать переход дня
+bool allowFixOnly = false; // Учитывать только RTK Int
 
 QString fileTypes = "NMEA LOG-Files (*.nme *.log *.txt *.gpx);;All Files (*)"; // Типы файлов
 
@@ -2024,7 +2025,7 @@ void MainWindow::on_actionCreate_CSV_triggered()
 
               // $GPRMC,121747.10, A,5543.3054228,N,03755.4196557,E, 0.06, 0.00,310815, 0.0,E, A*3E
               //    0      1       2      3       4     5         6   7    8      9      10 11 12
-              if(line.contains("RMC") and (nmea.count()==13))
+              if(line.contains("RMC") and (nmea.count()>=13))
               {
                   // Пишем данные в файл
                   stream_RMC
@@ -2491,6 +2492,9 @@ void MainWindow::on_actionGGA_Ref_Point_Diff_triggered()
                   QStringList nmea = line.split(',');
                   type = nmea[6];
 
+                  // Пропускаем если решение не RTK Int
+                  if(type!="4" and allowFixOnly) continue;
+
                   // Пропускаем решение с признаком "невалидно" или "счисление"
                   if(type=="0" or type=="6")
                       continue;
@@ -2614,6 +2618,9 @@ void MainWindow::on_actionGGA_Coord_Average_triggered()
             QTextStream in(&inputFile);
 
             double summLat=0., summLon=0., summAlt=0.; // Сумма значений
+            double midLatM=0., midLonM=0., midAltM=0.; // Сумма значений
+            double summX=0., summY=0., summZ=0.; // Сумма значений
+
             int i=0;           // Счетчик
             QString type = ""; // Тип решения
 
@@ -2635,50 +2642,100 @@ void MainWindow::on_actionGGA_Coord_Average_triggered()
                   // Если тип решения RTK Fix
                   if(type=="4")
                   {
-                      // Добавить фильтр отскоков и ложных решений
-                      double lat = nmea[2].toDouble(); // Широта
-                      double lon = nmea[4].toDouble(); // Долгота
-                      double alt = nmea[9].toDouble() + nmea[11].toDouble(); // Высота над элипсоидом
+                      // todo - Добавить фильтр отскоков и ложных решений
+                      double latGrad=0.; // Широта
+                      double lonGrad=0.; // Долгота
+                      double X=0.,Y=0.,Z=0.;
+                      func::BLH_to_XYZ(line,X,Y,Z);
+                      func::GGA_BL_Grad(line,latGrad,lonGrad); // Переводим в градусы
 
-                      summLat += lat;
-                      summLon += lon;
+                      double alt = nmea[9].toDouble() + nmea[11].toDouble(); // Высота над эллипсоидом
+
+                      // Вариант 1 (Сумма/Кол-во)
+                      summLat += latGrad;
+                      summLon += lonGrad;
                       summAlt += alt;
+
+                      summX += X;
+                      summY += Y;
+                      summZ += Z;
+
+                      // Вариант 2 M(X)i = M(X)i-1 + (Xi – M(X)i-1) / i
+                      if(i>0)
+                      {
+                          midLatM += (latGrad-midLatM)/i;
+                          midLonM += (lonGrad-midLonM)/i;
+                          midAltM += (alt-midAltM)/i;
+                      }
+                      else
+                      {
+                          midLatM = latGrad;
+                          midLonM = lonGrad;
+                          midAltM = alt;
+                      }
+
                       i++;
                   }
                   // RTK Float
                   else if (type=="5")
                       {
+                        continue;
                       }
                   else
                   // Остальные - 3D/3D Diff/DR ...
                       {
-
+                        continue;
                       }
-
              }
-
            }
 
            inputFile.close();
 
-           // Если хотябы в одном массиве есть данные
+           // Если были RTK Int
            if(i>0)
            {
                // Вычисляем статистику
+
+               // Вариант 1
                double midLat = summLat/(double)i;
                double midLon = summLon/(double)i;
                double midAlt = summAlt/(double)i;
 
+               ui->textBrowser->append("SUMM(X)/i");
                ui->textBrowser->append("RTK Int Points: "+QString::number(i));
                ui->textBrowser->append("Lat: "+QString::number(midLat,'f',7));
                ui->textBrowser->append("Lon: "+QString::number(midLon,'f',7));
                ui->textBrowser->append("Alt (Ellipsoid): "+QString::number(midAlt,'f',3));
 
+               double midX = summX/(double)i;
+               double midY = summY/(double)i;
+               double midZ = summZ/(double)i;
+
+               ui->textBrowser->append("X: "+QString::number(midX,'f',3));
+               ui->textBrowser->append("Y: "+QString::number(midY,'f',3));
+               ui->textBrowser->append("Z: "+QString::number(midZ,'f',3));
+
+               //  Вариант 2
+               double fractpart, intpart;
+               ui->textBrowser->append("Alpha-Filter");
+               ui->textBrowser->append("Lat: "+QString::number(midLatM,'f',7));
+               ui->textBrowser->append("Lon: "+QString::number(midLonM,'f',7));
+               fractpart = modf(midLatM,&intpart)*60;
+               ui->textBrowser->append("Lat: "+ QString::number(intpart,'f',0) + QString::number(fractpart,'f',7));
+               fractpart = modf(midLonM,&intpart)*60;
+               ui->textBrowser->append("Lon: " + QString::number(intpart,'f',0) + QString::number(fractpart,'f',7));
+               ui->textBrowser->append("Alt (Ellipsoid): "+QString::number(midAltM,'f',3));
+               double X,Y,Z;
+               QString BLH = QString::number(intpart,'f',0) + QString::number(fractpart,'f',7)+","+QString::number(intpart,'f',0) + QString::number(fractpart,'f',7)+","+QString::number(midAltM,'f',3);
+               func::BLH_to_XYZ(BLH,X,Y,Z);
+               ui->textBrowser->append("X: "+QString::number(X,'f',3));
+               ui->textBrowser->append("Y: "+QString::number(Y,'f',3));
+               ui->textBrowser->append("Z: "+QString::number(Z,'f',3));
            }
-           // Если массивы векторов пустые то сообщаем, что нет GGA данных
+           // Если нет RTK Int, что нет данных
            else
            {
-               ui->textBrowser->append("No GGA Data");
+               ui->textBrowser->append("No RTK Int Data");
            }
 
         }// if inputFile
@@ -3052,6 +3109,13 @@ void MainWindow::on_commandLine_returnPressed()
             else
                 days = true;
         }
+        else if(command.contains("allowFixOnly"))
+        {
+            if(command.contains("off"))
+                allowFixOnly = false;
+            else
+                allowFixOnly = true;
+        }
     }
 
     if(command.contains("get")) // Запрос
@@ -3077,6 +3141,14 @@ void MainWindow::on_commandLine_returnPressed()
                     ui->textBrowser->append("days on");
                 else
                     ui->textBrowser->append("days off");
+            }
+        else
+            if(command.contains("allowFixOnly"))
+            {
+                if(allowFixOnly)
+                    ui->textBrowser->append("allowFixOnly on");
+                else
+                    ui->textBrowser->append("allowFixOnly off");
             }
     }
 
@@ -3207,4 +3279,25 @@ void MainWindow::on_actionGGA_Distance_triggered()
         ui->textBrowser->append("File Name is Empty");
         ui->tabWidget->setCurrentIndex(1); // Переходим на вкладку Stat
     }
+}
+//----------------------------------------------------------------------------------------
+// DBG - График Ratio
+void MainWindow::on_actionDBG_Ratio_triggered()
+{
+    // Если fileName пустой - открыть Диалог.
+    if(fileName.isEmpty())
+        MainWindow::on_actionOpen_File_triggered();
+
+    // Массивы координат 3D/Diff - X1,Y1; Fix - X4,Y4; Float - X5,Y5;
+    QVector<double> X1, Y1, X4, Y4, X5, Y5;
+
+    // Собираем векторы
+    func::DBG_Ratio_Vectors(fileName,&X1,&Y1,&X4,&Y4,&X5,&Y5);
+
+    // Выводим статистику
+    func::Stat3D_Fix_Float(ui->textBrowser,&X1,&X4,&X5);
+
+    // Очищаем и рисуем графики
+    ui->customPlot->clearGraphs();
+    func::drawGraph3D_Fix_Float_Time(ui->customPlot,X1,Y1,X4,Y4,X5,Y5);
 }

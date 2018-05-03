@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1028</width>
-    <height>525</height>
+    <height>531</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -319,6 +319,8 @@
     <addaction name="actionBSS_Distance"/>
     <addaction name="actionBSS_Total_Valid"/>
     <addaction name="separator"/>
+    <addaction name="actionDBG_Ratio"/>
+    <addaction name="separator"/>
     <addaction name="actionBLS"/>
     <addaction name="actionBLS_Course_Difference"/>
     <addaction name="actionHDT_Course"/>
@@ -532,6 +534,11 @@
   <action name="actionGGA_Distance">
    <property name="text">
     <string>GGA Distance</string>
+   </property>
+  </action>
+  <action name="actionDBG_Ratio">
+   <property name="text">
+    <string>DBG Ratio</string>
    </property>
   </action>
  </widget>

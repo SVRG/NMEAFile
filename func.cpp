@@ -610,9 +610,9 @@ void func::GGA_BLH_Radians(QString GGA_String, double &B, double &L, double &H)
     QStringList nmea = GGA_String.split(',');
 
     // BLH->XYZ Строковые и числовые переменные
-    QString BStr="0",LStr="0", HStr="0";
+    QString BStr="0",LStr="0";
 
-    //$GPGGA,042820.00,5452.9685563,N,08258.4430767,E,4,17,0.7,149.822, M ,-37.031,M  , 1.0,0002*60
+    //$GPGGA,223520.00,5544.5518488,N,03731.3603607,E,4,16,0.7,174.296,M,14.760,M,1.0,0017*43
     //   0        1        2        3      4        5 6  7  8    9     10   11     12   13   14
     if(GGA_String.contains("GGA"))
     {
@@ -630,6 +630,11 @@ void func::GGA_BLH_Radians(QString GGA_String, double &B, double &L, double &H)
         BStr=nmea[3];
         LStr=nmea[5];
         H = 0; // в RMC нет высоты
+    }
+    else if (nmea.count()==3) {
+       BStr = nmea[0];
+       LStr = nmea[1];
+       H = nmea[2].toDouble();
     }
 
     // Вывод строки GGA в Лог-окно
@@ -1260,7 +1265,7 @@ void func::Statistics(QString fileName, QTextBrowser *textBrowser)
 
            int Float2Fix=0, Fix2X=0; // Количество переходов Float->Fix и Fix в любой статус
 
-           QString ver = "";
+           QString ver = "", hwv="";
 
            QString pStatus="", cStatus="", pLine=""; // Предыдущий и текущий статус, предыдущая строка GGA
 
@@ -1275,8 +1280,11 @@ void func::Statistics(QString fileName, QTextBrowser *textBrowser)
               // Ищем версию
               if(ver=="")
               if(line.contains("VER"))
-                  if(ver != func::getNMEAfromLine(line,"VER"))
-                        ver = func::getNMEAfromLine(line,"VER")+"\n";
+                   ver = func::getNMEAfromLine(line,"VER")+"\n";
+
+              if(hwv=="")
+              if(line.contains("HWV"))
+                   hwv = func::getNMEAfromLine(line,"HWV")+"\n";
 
               QString gga = func::getGGAfromLine(line);
 
@@ -1818,12 +1826,12 @@ QString func::getGGAfromLine(QString line)
     return(gga);
 }
 //----------------------------------------------------------------------------------------------------------------
-// GGA - получение подстроки GGA из строки NMEA+DBG
+// NMEA - получение подстроки NMEA из строки NMEA+DBG - работает только для первой подстроки
 QString func::getNMEAfromLine(QString line, QString MessID)
 {
     QString nmea = "";
 
-    int nmea_start_index = line.indexOf(MessID,2)-3;
+    int nmea_start_index = line.indexOf(MessID,1);
     if(nmea_start_index<0)
         return "";
 
@@ -1834,7 +1842,107 @@ QString func::getNMEAfromLine(QString line, QString MessID)
 
     nmea = line.mid(nmea_start_index,nmea_end_index-nmea_start_index);
 
-    //qDebug() << gga;
+    //qDebug() << nmea;
 
     return(nmea);
+}
+//----------------------------------------------------------------------------------------------------------------
+// GGA - перевод координат из Град Мин.Доли в Град.доли
+void func::GGA_BL_Grad(QString GGA_Line, double &B, double &L)
+{
+    if(!func::GGA_Check(GGA_Line))
+        return;
+
+    QStringList nmea = GGA_Line.split(",");
+    QString B_str = nmea[2];
+    QString L_str = nmea[4];
+
+    double Bgrad = B_str.left(2).toDouble();
+    Bgrad += (B_str.remove(0,2).toDouble())/60;
+    B = Bgrad;
+
+    double Lgrad = L_str.left(3).toDouble();
+    Lgrad += (L_str.remove(0,3).toDouble())/60;
+    L = Lgrad;
+
+    //qDebug() << QString::number(Bgrad,'g',10);
+    //qDebug() << QString::number(Lgrad,'g',10);
+}
+//----------------------------------------------------------------------------------------------------------
+// Из файла NMEA формирует векторы Ratio Y_ и времени X_
+// 3D/Diff - X1,Y1; Fix - X4,Y4; Float - X5,Y5;
+void func::DBG_Ratio_Vectors(QString fileName, QVector<double> *X1, QVector<double> *Y1, QVector<double> *X4, QVector<double> *Y4, QVector<double> *X5, QVector<double> *Y5)
+{
+    // Если имя не пустое то загружаем содержимое
+    if (!fileName.isEmpty())
+    {
+        // Связываем переменную с физическим файлом
+        QFile inputFile(fileName);
+        // Если все ОК то открываем файл
+        if (inputFile.open(QIODevice::ReadOnly))
+        {
+           QTextStream in(&inputFile);
+
+           // Счетчик невалидных решений
+           int notValid=0;
+
+           // Счетчик времени (решений)
+           int i=0;
+           int day=0;
+           double curr_time = 0, pred_time=-1, X=-1., Y=-1.;
+
+           // Пока не достигнем конца файла читаем строчки
+           while (!in.atEnd()) {
+              // Считываем строку
+              QString line = in.readLine();
+
+              // $PNVGDBG,232816.80,1,10.8,47,-0.0009834,0.0064*58
+              //      0       1     2   3  4    5         6
+              if(line.contains("DBG") and func::CRC_Check(line))
+              {
+                  // Разбиваем строку по запятой
+                  QStringList nmea = line.split(',');
+
+                  if(nmea.count()!=7)
+                      continue;
+
+                  curr_time = func::TimeToSeconds(nmea[1]);
+                  if(curr_time<pred_time) // Следующий день
+                    day++;
+                  pred_time = curr_time;
+
+                  X = func::TimeToQDateTime(nmea[1],day); // Время в секундах с начала дня
+
+                  Y = nmea[3].toDouble();
+                  continue;
+              }
+
+              // Если строка содежит GGA
+              // $GPGGA,093013.20,5544.5527978,N,03731.3594562,E,4,16,0.7,174.254,M,14.760,M,1.2,0002*46
+              //    0        1           2     3      4        5 6  7  8    9     10   11  12 13  14
+              if(func::GGA_Check(line)) // Ищем строку GGA
+              {
+
+                  // Разбиваем строку по запятой
+                  QStringList nmea = line.split(',');
+
+                  // Если данные не достоверны пропускаем
+                  if(nmea[6]=="0")
+                    {
+                      notValid++;
+                      continue;
+                    }
+
+                  // Записываем данные XY в зависимости от типа решения в соответствующие векторы
+                  if(X>=0 and Y>=0)
+                    func::GGA_to_3D_Fix_Float(nmea,X,Y,X1,Y1,X4,Y4,X5,Y5);
+                  X=-1; Y=-1;
+
+                  // Счетчик для валидных решений
+                  i++;
+              }
+           }
+           inputFile.close();
+        }
+    }
 }

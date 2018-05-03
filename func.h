@@ -38,6 +38,9 @@ public:
     static double GGA_2Point_2D_Diff(QString GGA_Line1, QString GGA_Line2);
     static QString getGGAfromLine(QString line);
     static QString getNMEAfromLine(QString line, QString MessID="GGA");
+    static void GGA_BL_Grad(QString GGA_Line, double &B, double &L);
+
+    static void DBG_Ratio_Vectors(QString fileName, QVector<double> *X1, QVector<double> *Y1, QVector<double> *X4, QVector<double> *Y4, QVector<double> *X5, QVector<double> *Y5);
 
     static void PERC_Time_Vectors(QString fileName, QVector<double> *X1, QVector<double> *Y1);
 
